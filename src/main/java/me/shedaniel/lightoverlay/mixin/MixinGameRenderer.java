@@ -36,7 +36,7 @@ public class MixinGameRenderer {
             BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
             BlockPos.iterateBoxPositions(playerPos.add(-getReach(), -getReach(), -getReach()), playerPos.add(getReach(), getReach(), getReach())).forEach(pos -> {
                 if (world.getBiome(pos).getMaxSpawnLimit() > 0) {
-                    CrossType type = LightOverlay.getCrossType(pos, world);
+                    CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
                     if (type != CrossType.NONE) {
                         VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
                         Color color = type == CrossType.RED ? Color.RED : Color.YELLOW;
@@ -44,7 +44,6 @@ public class MixinGameRenderer {
                     }
                 }
             });
-            GlStateManager.lineWidth(1F);
             GlStateManager.enableBlend();
             GlStateManager.enableTexture();
         }
