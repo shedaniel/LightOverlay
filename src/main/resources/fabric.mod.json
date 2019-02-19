@@ -12,7 +12,7 @@
     "me.shedaniel.lightoverlay.LightOverlay"
   ],
   "requires": {
-    "fabric": "0.1.5.87"
+    "fabric": "0.1.5"
   },
   "mixins": {
     "client": "lightoverlay.client.json"
