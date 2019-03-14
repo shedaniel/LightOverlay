@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(MinecraftClient.class)
 public class MixinMinecraftClient {
     
-    @Inject(method = "method_1508()V", at = @At("RETURN"))
-    private void method_1508(CallbackInfo callbackInfo) {
+    @Inject(method = "handleInputEvents()V", at = @At("RETURN"))
+    private void handleInputEvents(CallbackInfo callbackInfo) {
         while (LightOverlay.getEnableOverlay().wasPressed())
             LightOverlay.setEnabled(!LightOverlay.isEnabled());
     }

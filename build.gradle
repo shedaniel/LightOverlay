@@ -6,11 +6,11 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.0.1.2"
+version = "1.0.2.3"
 
-def minecraftVersion = "19w05a"
-def yarnVersion = "19w05a.5"
-def fabricVersion = "0.1.5.87"
+def minecraftVersion = "19w11a"
+def yarnVersion = "19w11a.1"
+def fabricVersion = "0.2.3.110"
 
 minecraft {
 }
@@ -29,7 +29,7 @@ repositories {
 dependencies {
     minecraft "com.mojang:minecraft:${minecraftVersion}"
     mappings "net.fabricmc:yarn:${yarnVersion}"
-    modCompile "net.fabricmc:fabric-loader:0.3.4.104"
+    modCompile "net.fabricmc:fabric-loader:0.3.7.109"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc:fabric:${fabricVersion}"
