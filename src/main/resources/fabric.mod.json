@@ -2,7 +2,7 @@
   "id": "lightoverlay",
   "name": "Light Overlay",
   "description": "To provide users with NEI-like light overlay.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "side": "client",
   "authors": [
     "Danielshe",
@@ -12,7 +12,8 @@
     "me.shedaniel.lightoverlay.LightOverlay"
   ],
   "requires": {
-    "fabric": "^0.2.3"
+    "fabric": "^0.2.3",
+    "cloth": "^0.1.4"
   },
   "mixins": {
     "client": "lightoverlay.client.json"

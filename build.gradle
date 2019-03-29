@@ -6,24 +6,19 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.0.2.3"
+version = "1.0.3.4"
 
-def minecraftVersion = "19w11a"
-def yarnVersion = "19w11a.1"
-def fabricVersion = "0.2.3.110"
+def minecraftVersion = "19w13a"
+def yarnVersion = "19w13a.6"
+def fabricVersion = "0.2.6.117"
+def cloth_version = "0.1.4.14"
 
 minecraft {
 }
 
-processResources {
-    filesMatching('fabric.mod.json') {
-        expand 'version': project.version
-    }
-    inputs.property "version", project.version
-}
-
 repositories {
     maven { url "https://tehnut.info/maven/" }
+    maven { url "https://minecraft.curseforge.com/api/maven" }
 }
 
 dependencies {
@@ -33,6 +28,7 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc:fabric:${fabricVersion}"
+    modCompile "cloth:Cloth:${cloth_version}"
 }
 
 // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
