@@ -2,7 +2,7 @@
   "id": "lightoverlay",
   "name": "Light Overlay",
   "description": "To provide users with NEI-like light overlay.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "side": "client",
   "authors": [
     "Danielshe",

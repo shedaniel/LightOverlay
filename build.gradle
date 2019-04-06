@@ -6,12 +6,12 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.0.3.4"
+version = "1.0.4.5"
 
-def minecraftVersion = "19w13a"
-def yarnVersion = "19w13a.6"
-def fabricVersion = "0.2.6.117"
-def cloth_version = "0.1.4.14"
+def minecraftVersion = "19w14b"
+def yarnVersion = "19w14b.1"
+def fabricVersion = "0.2.6.119"
+def cloth_version = "0.2.0.20"
 
 minecraft {
 }

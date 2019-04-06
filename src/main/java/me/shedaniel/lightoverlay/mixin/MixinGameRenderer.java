@@ -25,6 +25,7 @@ public class MixinGameRenderer {
     
     @Shadow @Final private MinecraftClient client;
     
+    // TODO: Move to Cloth
     @Inject(method = "renderCenter", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/debug/DebugRenderer;shouldRender()Z", ordinal = 0))
     public void renderLightOverlay(float delta, long long_1, CallbackInfo callbackInfo) {
         if (LightOverlay.isEnabled()) {

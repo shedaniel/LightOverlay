@@ -46,13 +46,11 @@ public class LightOverlay implements ClientModInitializer {
             return CrossType.NONE;
         if ((!blockBelowState.getMaterial().blocksLight() && blockBelowState.isTranslucent(world, pos.down())) || !SpawnHelper.isClearForSpawn(world, pos, world.getBlockState(pos), world.getFluidState(pos)))
             return CrossType.NONE;
-        //        if (!world.canPlace(world.getBlockState(pos), pos, VerticalEntityPosition.fromEntity(playerEntity)))
-        //            return CrossType.NONE;
         if (blockBelowState.isAir() || !world.getBlockState(pos).isAir() || !blockBelowState.hasSolidTopSurface(world, pos, playerEntity) || !world.getFluidState(pos.down()).isEmpty())
             return CrossType.NONE;
-        if (world.method_8312(LightType.BLOCK, pos) >= 8)
+        if (world.getLightLevel(LightType.BLOCK, pos) >= 8)
             return CrossType.NONE;
-        if (world.method_8312(LightType.SKY, pos) >= 8)
+        if (world.getLightLevel(LightType.SKY, pos) >= 8)
             return CrossType.YELLOW;
         return CrossType.RED;
     }
