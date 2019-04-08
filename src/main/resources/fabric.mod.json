@@ -1,21 +1,32 @@
 {
+  "schemaVersion": 1,
   "id": "lightoverlay",
   "name": "Light Overlay",
   "description": "To provide users with NEI-like light overlay.",
-  "version": "1.0.4",
-  "side": "client",
+  "version": "${version}",
+  "environment": "client",
   "authors": [
     "Danielshe",
     "feldim2425"
   ],
-  "initializers": [
-    "me.shedaniel.lightoverlay.LightOverlay"
-  ],
-  "requires": {
-    "fabric": "^0.2.3",
-    "cloth": "^0.1.4"
+  "contact": {
+    "homepage": "https://minecraft.curseforge.com/projects/light-overlay",
+    "sources": "https://github.com/shedaniel/LightOverlay-Fabric",
+    "issues": "https://github.com/shedaniel/LightOverlay-Fabric/issues"
   },
-  "mixins": {
-    "client": "lightoverlay.client.json"
+  "entrypoints": {
+    "client": [
+      "me.shedaniel.lightoverlay.LightOverlay"
+    ]
+  },
+  "license": "Apache-2.0",
+  "icon": "pack.png",
+  "requires": {
+    "fabricloader": ">=0.4.0",
+    "cloth": "*",
+    "fabric": "*"
+  },
+  "custom": {
+    "modmenu:clientsideOnly": true
   }
 }

@@ -18,6 +18,7 @@ import net.minecraft.sortme.SpawnHelper;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 
@@ -25,20 +26,12 @@ import java.awt.*;
 
 public class LightOverlay implements ClientModInitializer {
     
-    private static final BoundingBox TEST_BOX = new BoundingBox(0.6D / 2D, 0, 0.6D / 2D, 1D - 0.6D / 2D, 1D, 1D - 0.6D / 2D);
     private static final String KEYBIND_CATEGORY = "key.lightoverlay.category";
     private static final Identifier ENABLE_OVERLAY_KEYBIND = new Identifier("lightoverlay", "enable_overlay");
-    private static boolean enabled = false;
+    private static final BoundingBox TEST_BOX = new BoundingBox(0.6D / 2D, 0, 0.6D / 2D, 1D - 0.6D / 2D, 1D, 1D - 0.6D / 2D);
     private static FabricKeyBinding enableOverlay;
+    private static boolean enabled = false;
     private static int reach = 12;
-    
-    public static boolean isEnabled() {
-        return enabled;
-    }
-    
-    public static int getReach() {
-        return reach;
-    }
     
     public static CrossType getCrossType(BlockPos pos, World world, PlayerEntity playerEntity) {
         BlockState blockBelowState = world.getBlockState(pos.down());
@@ -55,7 +48,7 @@ public class LightOverlay implements ClientModInitializer {
         return CrossType.RED;
     }
     
-    public static void renderCross(BlockPos pos, Color color, double delta, PlayerEntity entity) {
+    public static void renderCross(BlockPos pos, Color color, PlayerEntity entity) {
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
         GlStateManager.lineWidth(1.0F);
         GlStateManager.depthMask(false);
@@ -76,18 +69,40 @@ public class LightOverlay implements ClientModInitializer {
         GlStateManager.enableTexture();
     }
     
-    public static FabricKeyBinding getEnableOverlay() {
-        return enableOverlay;
-    }
-    
     @Override
     public void onInitializeClient() {
+        MinecraftClient client = MinecraftClient.getInstance();
         KeyBindingRegistryImpl.INSTANCE.addCategory(KEYBIND_CATEGORY);
         KeyBindingRegistryImpl.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEY_KEYBOARD, 296, KEYBIND_CATEGORY).build());
-        ClothClientHooks.HANDLE_INPUT.register(client -> {
+        ClothClientHooks.HANDLE_INPUT.register(minecraftClient -> {
             while (enableOverlay.wasPressed())
-                enabled = !isEnabled();
+                enabled = !enabled;
         });
+        ClothClientHooks.DEBUG_RENDER_PRE.register(() -> {
+            if (LightOverlay.enabled) {
+                PlayerEntity playerEntity = client.player;
+                World world = client.world;
+                GlStateManager.disableTexture();
+                GlStateManager.disableBlend();
+                BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
+                BlockPos.iterateBoxPositions(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
+                    if (world.getBiome(pos).getMaxSpawnLimit() > 0) {
+                        CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
+                        if (type != CrossType.NONE) {
+                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+                            Color color = type == CrossType.RED ? Color.RED : Color.YELLOW;
+                            LightOverlay.renderCross(pos, color, playerEntity);
+                        }
+                    }
+                });
+                GlStateManager.enableBlend();
+                GlStateManager.enableTexture();
+            }
+        });
+    }
+    
+    private static enum CrossType {
+        YELLOW, RED, NONE
     }
     
 }

@@ -1,19 +1,30 @@
 plugins {
-    id 'fabric-loom' version '0.2.0-SNAPSHOT'
+    id 'fabric-loom' version '0.2.1-SNAPSHOT'
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.0.4.5"
+version = "1.1.0+build.6"
 
 def minecraftVersion = "19w14b"
 def yarnVersion = "19w14b.1"
-def fabricVersion = "0.2.6.119"
-def cloth_version = "0.2.0.20"
+def fabricVersion = "0.2.6.121"
+def cloth_version = "0.3.0.22"
+
+jar {
+    version = project.version.replaceAll('\\+build.', '.')
+}
 
 minecraft {
+}
+
+processResources {
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
+    inputs.property "version", project.version
 }
 
 repositories {
@@ -24,17 +35,11 @@ repositories {
 dependencies {
     minecraft "com.mojang:minecraft:${minecraftVersion}"
     mappings "net.fabricmc:yarn:${yarnVersion}"
-    modCompile "net.fabricmc:fabric-loader:0.3.7.109"
+    modCompile "net.fabricmc:fabric-loader:0.4.0+build.116"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc:fabric:${fabricVersion}"
+    include "net.fabricmc:fabric:${fabricVersion}"
     modCompile "cloth:Cloth:${cloth_version}"
-}
-
-// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-// if it is present.
-// If you remove this task, sources will not be generated.
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+    include "cloth:Cloth:${cloth_version}"
 }
