@@ -6,12 +6,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.1.0+build.6"
+version = "1.1.1+build.7"
 
-def minecraftVersion = "19w14b"
-def yarnVersion = "19w14b.1"
-def fabricVersion = "0.2.6.121"
-def cloth_version = "0.3.0.22"
+def minecraftVersion = "1.14.1"
+def yarnVersion = "1.14.1+build.10"
+def fabricVersion = "0.1.0+f1618918"
+def fabricKeybindingsVersion = "0.1.0+f1618918"
+def cloth_version = "0.3.1.23"
 
 jar {
     version = project.version.replaceAll('\\+build.', '.')
@@ -38,8 +39,10 @@ dependencies {
     modCompile "net.fabricmc:fabric-loader:0.4.0+build.116"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
-    modCompile "net.fabricmc:fabric:${fabricVersion}"
-    include "net.fabricmc:fabric:${fabricVersion}"
-    modCompile "cloth:Cloth:${cloth_version}"
-    include "cloth:Cloth:${cloth_version}"
+    modCompile "net.fabricmc.fabric-api:fabric-api-base:${fabricVersion}"
+    include "net.fabricmc.fabric-api:fabric-api-base:${fabricVersion}"
+    modCompile "net.fabricmc.fabric-api:fabric-keybindings-v0:${fabricKeybindingsVersion}"
+    include "net.fabricmc.fabric-api:fabric-keybindings-v0:${fabricKeybindingsVersion}"
+    modCompile "cloth:ClothEvents:${cloth_version}"
+    include "cloth:ClothEvents:${cloth_version}"
 }

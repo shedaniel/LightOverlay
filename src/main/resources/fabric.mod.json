@@ -20,11 +20,10 @@
     ]
   },
   "license": "Apache-2.0",
-  "icon": "pack.png",
+  "icon": "icon.png",
   "requires": {
     "fabricloader": ">=0.4.0",
-    "cloth": "*",
-    "fabric": "*"
+    "cloth": "*"
   },
   "custom": {
     "modmenu:clientsideOnly": true

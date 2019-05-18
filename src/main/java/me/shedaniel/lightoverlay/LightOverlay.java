@@ -14,12 +14,12 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sortme.SpawnHelper;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.LightType;
+import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 
 import java.awt.*;
@@ -73,7 +73,7 @@ public class LightOverlay implements ClientModInitializer {
     public void onInitializeClient() {
         MinecraftClient client = MinecraftClient.getInstance();
         KeyBindingRegistryImpl.INSTANCE.addCategory(KEYBIND_CATEGORY);
-        KeyBindingRegistryImpl.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEY_KEYBOARD, 296, KEYBIND_CATEGORY).build());
+        KeyBindingRegistryImpl.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
         ClothClientHooks.HANDLE_INPUT.register(minecraftClient -> {
             while (enableOverlay.wasPressed())
                 enabled = !enabled;
@@ -85,7 +85,7 @@ public class LightOverlay implements ClientModInitializer {
                 GlStateManager.disableTexture();
                 GlStateManager.disableBlend();
                 BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
-                BlockPos.iterateBoxPositions(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
+                BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
                     if (world.getBiome(pos).getMaxSpawnLimit() > 0) {
                         CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
                         if (type != CrossType.NONE) {
@@ -102,7 +102,9 @@ public class LightOverlay implements ClientModInitializer {
     }
     
     private static enum CrossType {
-        YELLOW, RED, NONE
+        YELLOW,
+        RED,
+        NONE
     }
     
 }
