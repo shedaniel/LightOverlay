@@ -1,4 +1,7 @@
 {
   "key.lightoverlay.category": "Light Overlay",
-  "key.lightoverlay.enable_overlay": "Toggle Light Overlay"
+  "key.lightoverlay.enable_overlay": "Toggle Light Overlay",
+  "key.lightoverlay.decrease_reach": "Decrease Light Overlay's Reach",
+  "key.lightoverlay.increase_reach": "Increase Light Overlay's Reach",
+  "text.lightoverlay.current_reach": "The current reach is %d!"
 }
