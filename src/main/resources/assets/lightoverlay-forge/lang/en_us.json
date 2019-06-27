@@ -1,0 +1,7 @@
+{
+  "key.lightoverlay-forge.category": "Light Overlay",
+  "key.lightoverlay-forge.enable_overlay": "Toggle Light Overlay",
+  "key.lightoverlay-forge.decrease_reach": "Decrease Light Overlay's Reach",
+  "key.lightoverlay-forge.increase_reach": "Increase Light Overlay's Reach",
+  "text.lightoverlay-forge.current_reach": "The current reach is %d!"
+}
