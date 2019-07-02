@@ -21,6 +21,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
@@ -118,7 +119,8 @@ public class LightOverlay {
             GlStateManager.disableBlend();
             BlockPos playerPos = new BlockPos(playerEntity.posX, playerEntity.posY, playerEntity.posZ);
             BlockPos.getAllInBox(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
-                if (world.getBiome(pos).getSpawningChance() > 0) {
+                Biome biome = world.getBiome(pos);
+                if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
                     CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
                     if (type != CrossType.NONE) {
                         VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
