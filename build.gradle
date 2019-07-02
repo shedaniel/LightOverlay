@@ -6,7 +6,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "1.2+build.8"
+version = "1.2.1"
 
 def minecraftVersion = "1.14.1"
 def yarnVersion = "1.14.1+build.10"

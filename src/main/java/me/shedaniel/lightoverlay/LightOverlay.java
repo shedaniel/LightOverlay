@@ -23,6 +23,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 
 import java.awt.*;
 
@@ -104,7 +105,8 @@ public class LightOverlay implements ClientModInitializer {
                 GlStateManager.disableBlend();
                 BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
                 BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
-                    if (world.getBiome(pos).getMaxSpawnLimit() > 0) {
+                    Biome biome = world.getBiome(pos);
+                    if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
                         CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
                         if (type != CrossType.NONE) {
                             VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
