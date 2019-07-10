@@ -6,8 +6,7 @@
   "version": "${version}",
   "environment": "client",
   "authors": [
-    "Danielshe",
-    "feldim2425"
+    "Danielshe"
   ],
   "contact": {
     "homepage": "https://minecraft.curseforge.com/projects/light-overlay",
@@ -16,7 +15,7 @@
   },
   "entrypoints": {
     "client": [
-      "me.shedaniel.lightoverlay.LightOverlay"
+      "me.shedaniel.lightoverlay.fabric.LightOverlay"
     ]
   },
   "license": "Apache-2.0",

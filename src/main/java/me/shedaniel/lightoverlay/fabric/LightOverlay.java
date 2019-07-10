@@ -1,4 +1,4 @@
-package me.shedaniel.lightoverlay;
+package me.shedaniel.lightoverlay.fabric;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import me.shedaniel.cloth.hooks.ClothClientHooks;
