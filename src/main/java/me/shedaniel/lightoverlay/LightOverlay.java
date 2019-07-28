@@ -81,6 +81,8 @@ public class LightOverlay {
         BlockState blockBelowState = world.getBlockState(pos.down());
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, ISelectionContext.forEntity(playerEntity));
+        if (!blockUpperState.getFluidState().isEmpty())
+            return CrossType.NONE;
         /* WorldEntitySpawner.func_222266_a */
         // Check if the outline is full
         if (Block.doesSideFillSquare(upperCollisionShape, Direction.UP))
