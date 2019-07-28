@@ -3,5 +3,8 @@
   "key.lightoverlay-forge.enable_overlay": "Toggle Light Overlay",
   "key.lightoverlay-forge.decrease_reach": "Decrease Light Overlay's Reach",
   "key.lightoverlay-forge.increase_reach": "Increase Light Overlay's Reach",
-  "text.lightoverlay-forge.current_reach": "The current reach is %d!"
+  "key.lightoverlay-forge.increase_line_width": "Increase Light Overlay's Line Width",
+  "key.lightoverlay-forge.decrease_line_width": "Decrease Light Overlay's Line Width",
+  "text.lightoverlay-forge.current_reach": "The current reach is %d!",
+  "text.lightoverlay-forge.current_line_width": "The current line width is %s!"
 }
