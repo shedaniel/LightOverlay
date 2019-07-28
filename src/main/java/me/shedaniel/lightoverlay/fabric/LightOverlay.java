@@ -19,6 +19,7 @@ import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -65,6 +66,8 @@ public class LightOverlay implements ClientModInitializer {
             return CrossType.NONE;
         // Check if the collision has a bump
         if (upperCollisionShape.getMaximum(Direction.Axis.Y) > 0)
+            return CrossType.NONE;
+        if (blockUpperState.getBlock().matches(BlockTags.RAILS))
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.allowsSpawning(world, pos.down(), testingEntityType))
