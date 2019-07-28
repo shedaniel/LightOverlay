@@ -1,18 +1,16 @@
 plugins {
-    id 'fabric-loom' version '0.2.1-SNAPSHOT'
+    id 'fabric-loom' version '0.2.5-SNAPSHOT'
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "2.0"
+version = "3.0"
 
-def minecraftVersion = "1.14.1"
-def yarnVersion = "1.14.1+build.10"
-def fabricVersion = "0.1.0+f1618918"
-def fabricKeybindingsVersion = "0.1.0+f1618918"
-def fabricResourceVersion = "0.1.1+eff4f58d"
+def minecraftVersion = "1.14.4"
+def yarnVersion = "1.14.4+build.1"
+def fabricVersion = "0.3.0+build.206"
 def cloth_version = "0.3.1.23"
 
 jar {
@@ -40,11 +38,7 @@ dependencies {
     modCompile "net.fabricmc:fabric-loader:0.4.0+build.116"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
-    modCompile "net.fabricmc.fabric-api:fabric-api-base:${fabricVersion}"
-    include "net.fabricmc.fabric-api:fabric-api-base:${fabricVersion}"
-    modCompile "net.fabricmc.fabric-api:fabric-keybindings-v0:${fabricKeybindingsVersion}"
-    include "net.fabricmc.fabric-api:fabric-keybindings-v0:${fabricKeybindingsVersion}"
-    modCompile "net.fabricmc.fabric-api:fabric-resource-loader-v0:${fabricResourceVersion}"
+    modCompile "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
     modCompile "cloth:ClothEvents:${cloth_version}"
     include "cloth:ClothEvents:${cloth_version}"
 }

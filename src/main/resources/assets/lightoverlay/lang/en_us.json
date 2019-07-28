@@ -3,5 +3,8 @@
   "key.lightoverlay.enable_overlay": "Toggle Light Overlay",
   "key.lightoverlay.decrease_reach": "Decrease Light Overlay's Reach",
   "key.lightoverlay.increase_reach": "Increase Light Overlay's Reach",
-  "text.lightoverlay.current_reach": "The current reach is %d!"
+  "key.lightoverlay.increase_line_width": "Increase Light Overlay's Line Width",
+  "key.lightoverlay.decrease_line_width": "Decrease Light Overlay's Line Width",
+  "text.lightoverlay.current_reach": "The current reach is %d!",
+  "text.lightoverlay.current_line_width": "The current line width is %s!"
 }
