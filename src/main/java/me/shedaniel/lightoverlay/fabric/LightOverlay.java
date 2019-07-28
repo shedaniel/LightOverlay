@@ -58,6 +58,8 @@ public class LightOverlay implements ClientModInitializer {
         BlockState blockBelowState = world.getBlockState(pos.down());
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, EntityContext.of(playerEntity));
+        if (!blockUpperState.getFluidState().isEmpty())
+            return CrossType.NONE;
         // Check if the outline is full
         if (Block.isFaceFullSquare(upperCollisionShape, Direction.UP))
             return CrossType.NONE;
