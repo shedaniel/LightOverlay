@@ -33,7 +33,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -56,7 +55,7 @@ public class LightOverlayClient {
     private static EntityType<Entity> testingEntityType;
     private static float lineWidth = 1.0F;
     private static File configFile = new File(new File(Minecraft.getInstance().gameDir, "config"), "lightoverlay.properties");
-    private static Color yellowColor = Color.yellow, redColor = Color.red;
+    private static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
     
     public static void register() {
         // Load Config
@@ -100,7 +99,7 @@ public class LightOverlayClient {
         return CrossType.RED;
     }
     
-    public static void renderCross(World world, BlockPos pos, Color color, PlayerEntity entity) {
+    public static void renderCross(World world, BlockPos pos, int color, PlayerEntity entity) {
         ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
         GlStateManager.lineWidth(lineWidth);
         GlStateManager.depthMask(false);
@@ -115,10 +114,13 @@ public class LightOverlayClient {
         double d2 = info.getProjectedView().z;
         
         buffer.begin(1, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
-        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
-        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
-        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()).endVertex();
+        int red = (color >> 16) & 255;
+        int green = (color >> 8) & 255;
+        int blue = color & 255;
+        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).endVertex();
+        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).endVertex();
+        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).endVertex();
+        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).endVertex();
         tessellator.draw();
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture();
@@ -185,7 +187,7 @@ public class LightOverlayClient {
                     CrossType type = LightOverlayClient.getCrossType(pos, world, playerEntity);
                     if (type != CrossType.NONE) {
                         VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
-                        Color color = type == CrossType.RED ? redColor : yellowColor;
+                        int color = type == CrossType.RED ? redColor : yellowColor;
                         LightOverlayClient.renderCross(world, pos, color, playerEntity);
                     }
                 }
@@ -203,8 +205,8 @@ public class LightOverlayClient {
     
     private static void loadConfig(File file) {
         try {
-            redColor = Color.red;
-            yellowColor = Color.yellow;
+            redColor = 0xFF0000;
+            yellowColor = 0xFFFF00;
             if (!file.exists() || !file.canRead())
                 saveConfig(file);
             FileInputStream fis = new FileInputStream(file);
@@ -218,22 +220,22 @@ public class LightOverlayClient {
                 r = Integer.parseInt((String) properties.computeIfAbsent("yellowColorRed", a -> "255"));
                 g = Integer.parseInt((String) properties.computeIfAbsent("yellowColorGreen", a -> "255"));
                 b = Integer.parseInt((String) properties.computeIfAbsent("yellowColorBlue", a -> "0"));
-                yellowColor = new Color(r, g, b);
+                yellowColor = (r << 16) + (g << 8) + b;
             }
             {
                 int r, g, b;
                 r = Integer.parseInt((String) properties.computeIfAbsent("redColorRed", a -> "255"));
                 g = Integer.parseInt((String) properties.computeIfAbsent("redColorGreen", a -> "0"));
                 b = Integer.parseInt((String) properties.computeIfAbsent("redColorBlue", a -> "0"));
-                redColor = new Color(r, g, b);
+                redColor = (r << 16) + (g << 8) + b;
             }
             saveConfig(file);
         } catch (Exception e) {
             e.printStackTrace();
             reach = 7;
             lineWidth = 1.0F;
-            redColor = Color.red;
-            yellowColor = Color.yellow;
+            redColor = 0xFF0000;
+            yellowColor = 0xFFFF00;
             try {
                 saveConfig(file);
             } catch (IOException ex) {
@@ -246,21 +248,21 @@ public class LightOverlayClient {
         FileOutputStream fos = new FileOutputStream(file, false);
         fos.write("# Light Overlay Config".getBytes());
         fos.write("\n".getBytes());
-        fos.write(("reach=" + String.valueOf(reach)).getBytes());
+        fos.write(("reach=" + reach).getBytes());
         fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("yellowColorRed=" + String.valueOf(yellowColor.getRed())).getBytes());
+        fos.write(("yellowColorRed=" + ((yellowColor >> 16) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("yellowColorGreen=" + String.valueOf(yellowColor.getGreen())).getBytes());
+        fos.write(("yellowColorGreen=" + ((yellowColor >> 8) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("yellowColorBlue=" + String.valueOf(yellowColor.getBlue())).getBytes());
+        fos.write(("yellowColorBlue=" + (yellowColor & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("redColorRed=" + String.valueOf(redColor.getRed())).getBytes());
+        fos.write(("redColorRed=" + ((redColor >> 16) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("redColorGreen=" + String.valueOf(redColor.getGreen())).getBytes());
+        fos.write(("redColorGreen=" + ((redColor >> 8) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("redColorBlue=" + String.valueOf(redColor.getBlue())).getBytes());
+        fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
         fos.close();
     }
     
