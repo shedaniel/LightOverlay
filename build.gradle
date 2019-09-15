@@ -6,12 +6,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "3.4"
+version = "3.5"
 
 def minecraftVersion = "1.14.4"
 def yarnVersion = "1.14.4+build.1"
 def fabricVersion = "0.3.0+build.206"
-def cloth_version = "0.3.1.23"
+def cloth_version = "0.6.0"
+def cloth_config_version="1.1.2"
 
 jar {
     version = project.version.replaceAll('\\+build.', '.')
@@ -39,6 +40,19 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
-    modCompile "cloth:ClothEvents:${cloth_version}"
-    include "cloth:ClothEvents:${cloth_version}"
+    modCompile("cloth:cloth:events:${cloth_version}") {
+        transitive = false
+    }
+    modImplementation("cloth-config:config:2:${cloth_config_version}") {
+        transitive = false
+    }
+    modImplementation("io.github.prospector:modmenu:1.7.9+build.118") {
+        transitive = false
+    }
+    include("cloth:cloth:events:${cloth_version}") {
+        transitive = false
+    }
+    include("cloth-config:config:2:${cloth_config_version}") {
+        transitive = false
+    }
 }

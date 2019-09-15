@@ -38,20 +38,20 @@ import java.util.Properties;
 
 public class LightOverlay implements ClientModInitializer {
     
+    static final DecimalFormat FORMAT = new DecimalFormat("#.#");
     private static final String KEYBIND_CATEGORY = "key.lightoverlay.category";
     private static final Identifier ENABLE_OVERLAY_KEYBIND = new Identifier("lightoverlay", "enable_overlay");
     private static final Identifier INCREASE_REACH_KEYBIND = new Identifier("lightoverlay", "increase_reach");
     private static final Identifier DECREASE_REACH_KEYBIND = new Identifier("lightoverlay", "decrease_reach");
     private static final Identifier INCREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "increase_line_width");
     private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
-    private static final DecimalFormat FORMAT = new DecimalFormat("#.#");
+    static int reach = 7;
+    static float lineWidth = 1.0F;
+    static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
     private static FabricKeyBinding enableOverlay, increaseReach, decreaseReach, increaseLineWidth, decreaseLineWidth;
     private static boolean enabled = false;
-    private static int reach = 7;
-    private static float lineWidth = 1.0F;
-    private static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
+    static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
     private static EntityType<Entity> testingEntityType;
-    private static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
     
     public static CrossType getCrossType(BlockPos pos, World world, PlayerEntity playerEntity) {
         BlockState blockBelowState = world.getBlockState(pos.down());
@@ -189,7 +189,7 @@ public class LightOverlay implements ClientModInitializer {
         });
     }
     
-    private void loadConfig(File file) {
+    static void loadConfig(File file) {
         try {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
@@ -230,7 +230,7 @@ public class LightOverlay implements ClientModInitializer {
         }
     }
     
-    private void saveConfig(File file) throws IOException {
+    static void saveConfig(File file) throws IOException {
         FileOutputStream fos = new FileOutputStream(file, false);
         fos.write("# Light Overlay Config".getBytes());
         fos.write("\n".getBytes());

@@ -6,5 +6,11 @@
   "key.lightoverlay.increase_line_width": "Increase Light Overlay's Line Width",
   "key.lightoverlay.decrease_line_width": "Decrease Light Overlay's Line Width",
   "text.lightoverlay.current_reach": "The current reach is %d!",
-  "text.lightoverlay.current_line_width": "The current line width is %s!"
+  "text.lightoverlay.current_line_width": "The current line width is %s!",
+  "config.lightoverlay.general": "General",
+  "config.lightoverlay.reach": "Reach:",
+  "config.lightoverlay.lineWidth": "Line Width:",
+  "config.lightoverlay.yellowColor": "Yellow Color:",
+  "config.lightoverlay.redColor": "Red Color:",
+  "config.lightoverlay.invalidColor": "Invalid Color"
 }

@@ -16,6 +16,9 @@
   "entrypoints": {
     "client": [
       "me.shedaniel.lightoverlay.fabric.LightOverlay"
+    ],
+    "modmenu": [
+      "me.shedaniel.lightoverlay.fabric.LOModMenuEntry"
     ]
   },
   "license": "Apache-2.0",
