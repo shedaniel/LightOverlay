@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 plugins {
     id 'fabric-loom' version '0.2.5-SNAPSHOT'
 }
@@ -6,17 +8,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = "3.5"
+version = ((String) project.mod_version).contains("unstable") ? (project.mod_version + "." + buildTime()) : project.mod_version
 
-def minecraftVersion = "1.14.4"
-def yarnVersion = "1.14.4+build.1"
-def fabricVersion = "0.3.0+build.206"
-def cloth_version = "0.6.0"
-def cloth_config_version="1.1.2"
-
-jar {
-    version = project.version.replaceAll('\\+build.', '.')
-}
+def minecraftVersion = "19w38b"
+def yarnVersion = "19w38b+build.9"
+def fabricVersion = "0.3.3+build.235-1.15"
+def cloth_version = "1.0.0-unstable.201909280702"
+def cloth_config_version="2.0.0-unstable.201909280635"
 
 minecraft {
 }
@@ -28,7 +26,14 @@ processResources {
     inputs.property "version", project.version
 }
 
+static def buildTime() {
+    def df = new SimpleDateFormat("yyyyMMddHHmm")
+    df.setTimeZone(TimeZone.getTimeZone("UTC"))
+    return df.format(new Date())
+}
+
 repositories {
+    jcenter()
     maven { url "https://tehnut.info/maven/" }
     maven { url "https://minecraft.curseforge.com/api/maven" }
 }
@@ -36,23 +41,23 @@ repositories {
 dependencies {
     minecraft "com.mojang:minecraft:${minecraftVersion}"
     mappings "net.fabricmc:yarn:${yarnVersion}"
-    modCompile "net.fabricmc:fabric-loader:0.4.0+build.116"
+    modCompile "net.fabricmc:fabric-loader:0.6.2+build.166"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
-    modCompile("cloth:cloth:events:${cloth_version}") {
+    modCompile("me.shedaniel.cloth:cloth-events:${cloth_version}") {
         transitive = false
     }
-    modImplementation("cloth-config:config:2:${cloth_config_version}") {
+    modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}") {
         transitive = false
     }
-    modImplementation("io.github.prospector:modmenu:1.7.9+build.118") {
+    modImplementation("io.github.prospector:modmenu:1.7.13-unstable.19w38b+build.5") {
         transitive = false
     }
-    include("cloth:cloth:events:${cloth_version}") {
+    include("me.shedaniel.cloth:cloth-events:${cloth_version}") {
         transitive = false
     }
-    include("cloth-config:config:2:${cloth_config_version}") {
+    include("me.shedaniel.cloth:config-2:${cloth_config_version}") {
         transitive = false
     }
 }

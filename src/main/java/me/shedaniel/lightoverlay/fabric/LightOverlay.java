@@ -1,6 +1,6 @@
 package me.shedaniel.lightoverlay.fabric;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.cloth.hooks.ClothClientHooks;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.FabricKeyBinding;
@@ -48,9 +48,9 @@ public class LightOverlay implements ClientModInitializer {
     static int reach = 7;
     static float lineWidth = 1.0F;
     static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
+    static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
     private static FabricKeyBinding enableOverlay, increaseReach, decreaseReach, increaseLineWidth, decreaseLineWidth;
     private static boolean enabled = false;
-    static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
     private static EntityType<Entity> testingEntityType;
     
     public static CrossType getCrossType(BlockPos pos, World world, PlayerEntity playerEntity) {
@@ -82,9 +82,9 @@ public class LightOverlay implements ClientModInitializer {
     
     public static void renderCross(World world, BlockPos pos, int color, PlayerEntity entity) {
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-        GlStateManager.lineWidth(lineWidth);
-        GlStateManager.depthMask(false);
-        GlStateManager.disableTexture();
+        RenderSystem.lineWidth(lineWidth);
+        RenderSystem.depthMask(false);
+        RenderSystem.disableTexture();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBufferBuilder();
         double d0 = camera.getPos().x;
@@ -103,8 +103,71 @@ public class LightOverlay implements ClientModInitializer {
         buffer.vertex(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).next();
         buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
         tessellator.draw();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableTexture();
+        RenderSystem.depthMask(true);
+        RenderSystem.enableTexture();
+    }
+    
+    static void loadConfig(File file) {
+        try {
+            redColor = 0xFF0000;
+            yellowColor = 0xFFFF00;
+            if (!file.exists() || !file.canRead())
+                saveConfig(file);
+            FileInputStream fis = new FileInputStream(file);
+            Properties properties = new Properties();
+            properties.load(fis);
+            fis.close();
+            reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "7"));
+            lineWidth = Float.valueOf((String) properties.computeIfAbsent("lineWidth", a -> "1"));
+            {
+                int r, g, b;
+                r = Integer.parseInt((String) properties.computeIfAbsent("yellowColorRed", a -> "255"));
+                g = Integer.parseInt((String) properties.computeIfAbsent("yellowColorGreen", a -> "255"));
+                b = Integer.parseInt((String) properties.computeIfAbsent("yellowColorBlue", a -> "0"));
+                yellowColor = (r << 16) + (g << 8) + b;
+            }
+            {
+                int r, g, b;
+                r = Integer.parseInt((String) properties.computeIfAbsent("redColorRed", a -> "255"));
+                g = Integer.parseInt((String) properties.computeIfAbsent("redColorGreen", a -> "0"));
+                b = Integer.parseInt((String) properties.computeIfAbsent("redColorBlue", a -> "0"));
+                redColor = (r << 16) + (g << 8) + b;
+            }
+            saveConfig(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            reach = 7;
+            lineWidth = 1.0F;
+            redColor = 0xFF0000;
+            yellowColor = 0xFFFF00;
+            try {
+                saveConfig(file);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    
+    static void saveConfig(File file) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file, false);
+        fos.write("# Light Overlay Config".getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("reach=" + reach).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("yellowColorRed=" + ((yellowColor >> 16) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("yellowColorGreen=" + ((yellowColor >> 8) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("yellowColorBlue=" + (yellowColor & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("redColorRed=" + ((redColor >> 16) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("redColorGreen=" + ((redColor >> 8) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
+        fos.close();
     }
     
     @Override
@@ -169,8 +232,8 @@ public class LightOverlay implements ClientModInitializer {
             if (LightOverlay.enabled) {
                 PlayerEntity playerEntity = client.player;
                 World world = client.world;
-                GlStateManager.disableTexture();
-                GlStateManager.disableBlend();
+                RenderSystem.disableTexture();
+                RenderSystem.disableBlend();
                 BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
                 BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
                     Biome biome = world.getBiome(pos);
@@ -183,73 +246,10 @@ public class LightOverlay implements ClientModInitializer {
                         }
                     }
                 });
-                GlStateManager.enableBlend();
-                GlStateManager.enableTexture();
+                RenderSystem.enableBlend();
+                RenderSystem.enableTexture();
             }
         });
-    }
-    
-    static void loadConfig(File file) {
-        try {
-            redColor = 0xFF0000;
-            yellowColor = 0xFFFF00;
-            if (!file.exists() || !file.canRead())
-                saveConfig(file);
-            FileInputStream fis = new FileInputStream(file);
-            Properties properties = new Properties();
-            properties.load(fis);
-            fis.close();
-            reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "7"));
-            lineWidth = Float.valueOf((String) properties.computeIfAbsent("lineWidth", a -> "1"));
-            {
-                int r, g, b;
-                r = Integer.parseInt((String) properties.computeIfAbsent("yellowColorRed", a -> "255"));
-                g = Integer.parseInt((String) properties.computeIfAbsent("yellowColorGreen", a -> "255"));
-                b = Integer.parseInt((String) properties.computeIfAbsent("yellowColorBlue", a -> "0"));
-                yellowColor = (r << 16) + (g << 8) + b;
-            }
-            {
-                int r, g, b;
-                r = Integer.parseInt((String) properties.computeIfAbsent("redColorRed", a -> "255"));
-                g = Integer.parseInt((String) properties.computeIfAbsent("redColorGreen", a -> "0"));
-                b = Integer.parseInt((String) properties.computeIfAbsent("redColorBlue", a -> "0"));
-                redColor = (r << 16) + (g << 8) + b;
-            }
-            saveConfig(file);
-        } catch (Exception e) {
-            e.printStackTrace();
-            reach = 7;
-            lineWidth = 1.0F;
-            redColor = 0xFF0000;
-            yellowColor = 0xFFFF00;
-            try {
-                saveConfig(file);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-    
-    static void saveConfig(File file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file, false);
-        fos.write("# Light Overlay Config".getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("reach=" + reach).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("yellowColorRed=" + ((yellowColor >> 16) & 255)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("yellowColorGreen=" + ((yellowColor >> 8) & 255)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("yellowColorBlue=" + (yellowColor & 255)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("redColorRed=" + ((redColor >> 16) & 255)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("redColorGreen=" + ((redColor >> 8) & 255)).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
-        fos.close();
     }
     
     private static enum CrossType {
