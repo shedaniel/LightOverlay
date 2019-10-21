@@ -6,5 +6,11 @@
   "key.lightoverlay-forge.increase_line_width": "Increase Light Overlay's Line Width",
   "key.lightoverlay-forge.decrease_line_width": "Decrease Light Overlay's Line Width",
   "text.lightoverlay-forge.current_reach": "The current reach is %d!",
-  "text.lightoverlay-forge.current_line_width": "The current line width is %s!"
+  "text.lightoverlay-forge.current_line_width": "The current line width is %s!",
+  "config.lightoverlay-forge.general": "General",
+  "config.lightoverlay-forge.reach": "Reach:",
+  "config.lightoverlay-forge.lineWidth": "Line Width:",
+  "config.lightoverlay-forge.yellowColor": "Yellow Color:",
+  "config.lightoverlay-forge.redColor": "Red Color:",
+  "config.lightoverlay-forge.invalidColor": "Invalid Color"
 }
