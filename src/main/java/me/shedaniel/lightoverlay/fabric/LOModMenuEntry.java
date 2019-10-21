@@ -35,7 +35,7 @@ public class LOModMenuEntry implements ModMenuApi {
                 .build()
         );
         general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700)
-                .setDefaultValue(7)
+                .setDefaultValue(100)
                 .setTextGetter(integer -> "Light Width: " + LightOverlay.FORMAT.format(integer / 100d))
                 .setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f)
                 .build()
