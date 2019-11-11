@@ -20,26 +20,25 @@ authors="Danielshe" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 # The modid of the mod
-modId="lightoverlay-forge" #mandatory
+    modId="lightoverlay-forge" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-version="${file.jarVersion}" #mandatory
+    version="${file.jarVersion}" #mandatory
  # A display name for the mod
-displayName="Light Overlay Forge" #mandatory
+    displayName="Light Overlay Forge" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 # updateJSONURL="http://myurl.me/" #optional
 # The description text for the mod (multi line!) (#mandatory)
-description='''
+    description='''
 To provide users with NEI-like light overlay.
 '''
 
-[[dependencies.examplemod]] #optional
+[[dependencies.lightoverlay-forge]] #optional
     # the modid of the dependency
     modId="cloth-config2" #mandatory
     # Does this dependency have to exist - if not, ordering below must be specified
     mandatory=true #mandatory
     # The version range of the dependency
     versionRange="[1.4.1,)" #mandatory
-    # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
-    ordering="AFTER"
+    ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
     side="CLIENT"
