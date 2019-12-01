@@ -3,7 +3,7 @@ package me.shedaniel.lightoverlay.fabric;
 import io.github.prospector.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.impl.ConfigEntryBuilderImpl;
+import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.math.MathHelper;
@@ -26,7 +26,7 @@ public class LOModMenuEntry implements ModMenuApi {
     public Screen getConfigScreenByCloth(Screen parent) {
         ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle("key.lightoverlay.category");
         
-        ConfigEntryBuilderImpl eb = builder.getEntryBuilder();
+        ConfigEntryBuilder eb = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory("config.lightoverlay.general");
         general.addEntry(eb.startIntSlider("config.lightoverlay.reach", LightOverlay.reach, 1, 50)
                 .setDefaultValue(7)
@@ -35,7 +35,7 @@ public class LOModMenuEntry implements ModMenuApi {
                 .build()
         );
         general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700)
-                .setDefaultValue(7)
+                .setDefaultValue(100)
                 .setTextGetter(integer -> "Light Width: " + LightOverlay.FORMAT.format(integer / 100d))
                 .setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f)
                 .build()

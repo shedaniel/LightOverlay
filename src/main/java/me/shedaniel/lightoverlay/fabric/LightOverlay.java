@@ -80,13 +80,7 @@ public class LightOverlay implements ClientModInitializer {
         return CrossType.RED;
     }
     
-    public static void renderCross(World world, BlockPos pos, int color, PlayerEntity entity) {
-        Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-        RenderSystem.lineWidth(lineWidth);
-        RenderSystem.depthMask(false);
-        RenderSystem.disableTexture();
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBufferBuilder();
+    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, PlayerEntity entity) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
         VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, EntityContext.of(entity));
@@ -103,8 +97,6 @@ public class LightOverlay implements ClientModInitializer {
         buffer.vertex(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).next();
         buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
         tessellator.draw();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableTexture();
     }
     
     static void loadConfig(File file) {
@@ -232,9 +224,18 @@ public class LightOverlay implements ClientModInitializer {
             if (LightOverlay.enabled) {
                 PlayerEntity playerEntity = client.player;
                 World world = client.world;
+                RenderSystem.enableDepthTest();
+                RenderSystem.shadeModel(7425);
+                RenderSystem.enableAlphaTest();
+                RenderSystem.defaultAlphaFunc();
                 RenderSystem.disableTexture();
                 RenderSystem.disableBlend();
-                BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
+                RenderSystem.lineWidth(lineWidth);
+                RenderSystem.depthMask(false);
+                BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
+                Tessellator tessellator = Tessellator.getInstance();
+                BufferBuilder buffer = tessellator.getBuffer();
+                Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
                 BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
                     Biome biome = world.getBiome(pos);
                     if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
@@ -242,12 +243,14 @@ public class LightOverlay implements ClientModInitializer {
                         if (type != CrossType.NONE) {
                             VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
                             int color = type == CrossType.RED ? redColor : yellowColor;
-                            LightOverlay.renderCross(world, pos, color, playerEntity);
+                            LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, playerEntity);
                         }
                     }
                 });
+                RenderSystem.depthMask(true);
                 RenderSystem.enableBlend();
                 RenderSystem.enableTexture();
+                RenderSystem.shadeModel(7424);
             }
         });
     }
