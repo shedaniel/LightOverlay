@@ -11,14 +11,14 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 
-version = "3.6.2"
+version = "4.1"
 group = "me.shedaniel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "LightOverlay"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20191019-1.14.3'
+    mappings channel: 'snapshot', version: '20191218-1.14.3'
     runs {
         client {
             workingDirectory project.file('run')
@@ -48,12 +48,12 @@ minecraft {
 }
 
 repositories {
-    maven { url 'https://jitpack.io' }
+    maven { url "https://minecraft.curseforge.com/api/maven/" }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.4-28.1.61'
-    implementation 'com.github.shedaniel:ClothConfig:c70da9769d'
+    minecraft 'net.minecraftforge:forge:1.15.1-30.0.7'
+    implementation "cloth-config-forge:ClothConfig2:2.0"
 }
 
 jar {

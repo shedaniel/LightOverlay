@@ -1,6 +1,6 @@
 package me.shedaniel.lightoverlay;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -100,18 +100,17 @@ public class LightOverlayClient {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.canEntitySpawn(world, pos.down(), testingEntityType))
             return CrossType.NONE;
-        if (world.getLightFor(LightType.BLOCK, pos) >= 8)
+        if (world.func_226658_a_(LightType.BLOCK, pos) >= 8)
             return CrossType.NONE;
-        if (world.getLightFor(LightType.SKY, pos) >= 8)
+        if (world.func_226658_a_(LightType.SKY, pos) >= 8)
             return CrossType.YELLOW;
         return CrossType.RED;
     }
     
     public static void renderCross(World world, BlockPos pos, int color, PlayerEntity entity) {
         ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
-        GlStateManager.lineWidth(lineWidth);
-        GlStateManager.depthMask(false);
-        GlStateManager.disableTexture();
+        RenderSystem.lineWidth(lineWidth);
+        RenderSystem.depthMask(false);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         double d0 = info.getProjectedView().x;
@@ -120,18 +119,16 @@ public class LightOverlayClient {
         if (!upperOutlineShape.isEmpty())
             d1 -= upperOutlineShape.getEnd(Direction.Axis.Y);
         double d2 = info.getProjectedView().z;
-        
         buffer.begin(1, DefaultVertexFormats.POSITION_COLOR);
         int red = (color >> 16) & 255;
         int green = (color >> 8) & 255;
         int blue = color & 255;
-        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).endVertex();
-        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).endVertex();
-        buffer.pos(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).endVertex();
-        buffer.pos(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).endVertex();
+        buffer.func_225582_a_(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).func_225586_a_(red, green, blue, 255).endVertex();
+        buffer.func_225582_a_(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).func_225586_a_(red, green, blue, 255).endVertex();
+        buffer.func_225582_a_(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).func_225586_a_(red, green, blue, 255).endVertex();
+        buffer.func_225582_a_(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).func_225586_a_(red, green, blue, 255).endVertex();
         tessellator.draw();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableTexture();
+        RenderSystem.depthMask(true);
     }
     
     @SubscribeEvent(receiveCanceled = true)
@@ -183,14 +180,17 @@ public class LightOverlayClient {
     @SubscribeEvent
     public static void renderWorldLast(RenderWorldLastEvent event) {
         if (LightOverlayClient.enabled) {
+            RenderSystem.pushMatrix();
+            RenderSystem.loadIdentity();
+            RenderSystem.multMatrix(event.getMatrixStack().func_227866_c_().func_227870_a_());
             Minecraft client = Minecraft.getInstance();
             ClientPlayerEntity playerEntity = client.player;
             World world = client.world;
-            GlStateManager.disableTexture();
-            GlStateManager.disableBlend();
-            BlockPos playerPos = new BlockPos(playerEntity.posX, playerEntity.posY, playerEntity.posZ);
+            RenderSystem.disableTexture();
+            RenderSystem.disableBlend();
+            BlockPos playerPos = playerEntity.getPosition();
             BlockPos.getAllInBox(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
-                Biome biome = world.getBiome(pos);
+                Biome biome = world.func_226691_t_(pos);
                 if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
                     CrossType type = LightOverlayClient.getCrossType(pos, world, playerEntity);
                     if (type != CrossType.NONE) {
@@ -200,8 +200,7 @@ public class LightOverlayClient {
                     }
                 }
             });
-            GlStateManager.enableBlend();
-            GlStateManager.enableTexture();
+            RenderSystem.popMatrix();
         }
     }
     
