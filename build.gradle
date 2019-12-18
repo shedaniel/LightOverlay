@@ -14,7 +14,7 @@ def minecraftVersion = "1.15-pre3"
 def yarnVersion = "1.15-pre3+build.2"
 def fabricVersion = "0.4.18+build.271-1.15"
 def cloth_version = "1.0.1-unstable.201912010433"
-def cloth_config_version="2.4-unstable.201911031154"
+def cloth_config_version="2.5.3"
 
 minecraft {
 }
