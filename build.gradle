@@ -48,9 +48,7 @@ dependencies {
     modCompile("me.shedaniel.cloth:cloth-events:${cloth_version}") {
         transitive = false
     }
-    modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}") {
-        include name: "basic-math"
-    }
+    modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}")
     modImplementation("io.github.prospector:modmenu:1.8.5+build.23") {
         transitive = false
     }
