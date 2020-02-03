@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 public class LightOverlay {
     
     public LightOverlay() {
+        //noinspection Convert2MethodRef
         DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> LightOverlayClient.register());
     }
     

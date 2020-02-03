@@ -5,9 +5,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
@@ -52,6 +51,8 @@ public class LightOverlayClient {
     private static final ResourceLocation INCREASE_LINE_WIDTH_KEYBIND = new ResourceLocation("lightoverlay-forge", "increase_line_width");
     private static final ResourceLocation DECREASE_LINE_WIDTH_KEYBIND = new ResourceLocation("lightoverlay-forge", "decrease_line_width");
     static int reach = 7;
+    static int crossLevel = 7;
+    static boolean showNumber = false;
     static EntityType<Entity> testingEntityType;
     static float lineWidth = 1.0F;
     static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
@@ -73,6 +74,7 @@ public class LightOverlayClient {
         MinecraftForge.EVENT_BUS.register(LightOverlayClient.class);
         
         try {
+            //noinspection Convert2MethodRef
             DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> LightOverlayCloth.register());
         } catch (Exception e) {
             e.printStackTrace();
@@ -100,19 +102,38 @@ public class LightOverlayClient {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.canEntitySpawn(world, pos.down(), testingEntityType))
             return CrossType.NONE;
-        if (world.func_226658_a_(LightType.BLOCK, pos) >= 8)
+        if (world.func_226658_a_(LightType.BLOCK, pos) > crossLevel)
             return CrossType.NONE;
-        if (world.func_226658_a_(LightType.SKY, pos) >= 8)
+        if (world.func_226658_a_(LightType.SKY, pos) > crossLevel)
             return CrossType.YELLOW;
         return CrossType.RED;
     }
     
-    public static void renderCross(World world, BlockPos pos, int color, PlayerEntity entity) {
-        ActiveRenderInfo info = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
-        RenderSystem.lineWidth(lineWidth);
-        RenderSystem.depthMask(false);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
+    public static int getCrossLevel(BlockPos pos, World world, PlayerEntity playerEntity) {
+        BlockState blockBelowState = world.getBlockState(pos.down());
+        BlockState blockUpperState = world.getBlockState(pos);
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, ISelectionContext.forEntity(playerEntity));
+        if (!blockUpperState.getFluidState().isEmpty())
+            return -1;
+        /* WorldEntitySpawner.func_222266_a */
+        // Check if the outline is full
+        if (Block.doesSideFillSquare(upperCollisionShape, Direction.UP))
+            return -1;
+        // Check if there is power
+        if (blockUpperState.canProvidePower())
+            return -1;
+        // Check if the collision has a bump
+        if (upperCollisionShape.getEnd(Direction.Axis.Y) > 0)
+            return -1;
+        if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
+            return -1;
+        // Check block state allow spawning (excludes bedrock and barriers automatically)
+        if (!blockBelowState.canEntitySpawn(world, pos.down(), testingEntityType))
+            return -1;
+        return world.func_226658_a_(LightType.BLOCK, pos);
+    }
+    
+    public static void renderCross(ActiveRenderInfo info, Tessellator tessellator, BufferBuilder buffer, World world, BlockPos pos, int color, PlayerEntity entity) {
         double d0 = info.getProjectedView().x;
         double d1 = info.getProjectedView().y - .005D;
         VoxelShape upperOutlineShape = world.getBlockState(pos).getShape(world, pos, ISelectionContext.forEntity(entity));
@@ -128,7 +149,29 @@ public class LightOverlayClient {
         buffer.func_225582_a_(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).func_225586_a_(red, green, blue, 255).endVertex();
         buffer.func_225582_a_(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).func_225586_a_(red, green, blue, 255).endVertex();
         tessellator.draw();
-        RenderSystem.depthMask(true);
+    }
+    
+    public static void renderLevel(Minecraft minecraft, ActiveRenderInfo info, World world, BlockPos pos, int level, PlayerEntity entity) {
+        String string_1 = String.valueOf(level);
+        FontRenderer fontRenderer = minecraft.fontRenderer;
+        double double_4 = info.getProjectedView().x;
+        double double_5 = info.getProjectedView().y;
+        VoxelShape upperOutlineShape = world.getBlockState(pos).getShape(world, pos, ISelectionContext.forEntity(entity));
+        if (!upperOutlineShape.isEmpty())
+            double_5 -= upperOutlineShape.getEnd(Direction.Axis.Y);
+        double double_6 = info.getProjectedView().z;
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
+        RenderSystem.rotatef(90, 1, 0, 0);
+        RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+        float size = 0.07F;
+        RenderSystem.scalef(-size, -size, size);
+        float float_3 = (float) (-fontRenderer.getStringWidth(string_1)) / 2.0F + 0.4f;
+        RenderSystem.enableAlphaTest();
+        IRenderTypeBuffer.Impl vertexConsumerProvider$Immediate_1 = IRenderTypeBuffer.func_228455_a_(Tessellator.getInstance().getBuffer());
+        fontRenderer.func_228079_a_(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, TransformationMatrix.func_227983_a_().func_227988_c_(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
+        vertexConsumerProvider$Immediate_1.func_228461_a_();
+        RenderSystem.popMatrix();
     }
     
     @SubscribeEvent(receiveCanceled = true)
@@ -186,20 +229,45 @@ public class LightOverlayClient {
             Minecraft client = Minecraft.getInstance();
             ClientPlayerEntity playerEntity = client.player;
             World world = client.world;
-            RenderSystem.disableTexture();
-            RenderSystem.disableBlend();
             BlockPos playerPos = playerEntity.getPosition();
-            BlockPos.getAllInBox(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
-                Biome biome = world.func_226691_t_(pos);
-                if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
-                    CrossType type = LightOverlayClient.getCrossType(pos, world, playerEntity);
-                    if (type != CrossType.NONE) {
-                        VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
-                        int color = type == CrossType.RED ? redColor : yellowColor;
-                        LightOverlayClient.renderCross(world, pos, color, playerEntity);
+            ActiveRenderInfo info = client.gameRenderer.getActiveRenderInfo();
+            if (showNumber) {
+                RenderSystem.enableTexture();
+                RenderSystem.enableDepthTest();
+                
+                RenderSystem.depthMask(true);
+                for (BlockPos pos : BlockPos.getAllInBoxMutable(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
+                    Biome biome = world.func_226691_t_(pos);
+                    if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
+                        int level = LightOverlayClient.getCrossLevel(pos, world, playerEntity);
+                        if (level >= 0) {
+                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+                            LightOverlayClient.renderLevel(client, info, world, pos, level, playerEntity);
+                        }
                     }
                 }
-            });
+                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.enableDepthTest();
+            } else {
+                RenderSystem.disableTexture();
+                RenderSystem.disableBlend();
+                RenderSystem.lineWidth(lineWidth);
+                RenderSystem.depthMask(false);
+                Tessellator tessellator = Tessellator.getInstance();
+                BufferBuilder buffer = tessellator.getBuffer();
+                for (BlockPos pos : BlockPos.getAllInBoxMutable(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
+                    Biome biome = world.func_226691_t_(pos);
+                    if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
+                        CrossType type = LightOverlayClient.getCrossType(pos, world, playerEntity);
+                        if (type != CrossType.NONE) {
+                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+                            int color = type == CrossType.RED ? redColor : yellowColor;
+                            LightOverlayClient.renderCross(info, tessellator, buffer, world, pos, color, playerEntity);
+                        }
+                    }
+                }
+                RenderSystem.depthMask(true);
+            }
             RenderSystem.popMatrix();
         }
     }
@@ -221,7 +289,9 @@ public class LightOverlayClient {
             properties.load(fis);
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "7"));
-            lineWidth = Float.valueOf((String) properties.computeIfAbsent("lineWidth", a -> "1"));
+            crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
+            showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
+            lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
             {
                 int r, g, b;
                 r = Integer.parseInt((String) properties.computeIfAbsent("yellowColorRed", a -> "255"));
@@ -257,6 +327,10 @@ public class LightOverlayClient {
         fos.write("\n".getBytes());
         fos.write(("reach=" + reach).getBytes());
         fos.write("\n".getBytes());
+        fos.write(("crossLevel=" + crossLevel).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("showNumber=" + showNumber).getBytes());
+        fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());
         fos.write(("yellowColorRed=" + ((yellowColor >> 16) & 255)).getBytes());
@@ -273,7 +347,7 @@ public class LightOverlayClient {
         fos.close();
     }
     
-    private static enum CrossType {
+    private enum CrossType {
         YELLOW,
         RED,
         NONE
