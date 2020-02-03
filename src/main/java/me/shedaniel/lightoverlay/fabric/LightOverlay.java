@@ -9,11 +9,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.*;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.math.Matrix4f;
+import net.minecraft.client.util.math.Rotation3;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityContext;
@@ -24,6 +24,7 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Quaternion;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -46,6 +47,8 @@ public class LightOverlay implements ClientModInitializer {
     private static final Identifier INCREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "increase_line_width");
     private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
     static int reach = 7;
+    static int crossLevel = 7;
+    static boolean showNumber = false;
     static float lineWidth = 1.0F;
     static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
     static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
@@ -73,11 +76,34 @@ public class LightOverlay implements ClientModInitializer {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.allowsSpawning(world, pos.down(), testingEntityType))
             return CrossType.NONE;
-        if (world.getLightLevel(LightType.BLOCK, pos) >= 8)
+        if (world.getLightLevel(LightType.BLOCK, pos) > crossLevel)
             return CrossType.NONE;
-        if (world.getLightLevel(LightType.SKY, pos) >= 8)
+        if (world.getLightLevel(LightType.SKY, pos) > crossLevel)
             return CrossType.YELLOW;
         return CrossType.RED;
+    }
+    
+    public static int getCrossLevel(BlockPos pos, World world, PlayerEntity playerEntity) {
+        BlockState blockBelowState = world.getBlockState(pos.down());
+        BlockState blockUpperState = world.getBlockState(pos);
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, EntityContext.of(playerEntity));
+        if (!blockUpperState.getFluidState().isEmpty())
+            return -1;
+        // Check if the outline is full
+        if (Block.isFaceFullSquare(upperCollisionShape, Direction.UP))
+            return -1;
+        // TODO: Not to hard code no redstone
+        if (blockUpperState.emitsRedstonePower())
+            return -1;
+        // Check if the collision has a bump
+        if (upperCollisionShape.getMaximum(Direction.Axis.Y) > 0)
+            return -1;
+        if (blockUpperState.getBlock().matches(BlockTags.RAILS))
+            return -1;
+        // Check block state allow spawning (excludes bedrock and barriers automatically)
+        if (!blockBelowState.allowsSpawning(world, pos.down(), testingEntityType))
+            return -1;
+        return world.getLightLevel(LightType.BLOCK, pos);
     }
     
     public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, PlayerEntity entity) {
@@ -99,6 +125,29 @@ public class LightOverlay implements ClientModInitializer {
         tessellator.draw();
     }
     
+    public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, int level, PlayerEntity entity) {
+        String string_1 = String.valueOf(level);
+        TextRenderer textRenderer_1 = client.textRenderer;
+        double double_4 = camera.getPos().x;
+        double double_5 = camera.getPos().y;
+        VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, EntityContext.of(entity));
+        if (!upperOutlineShape.isEmpty())
+            double_5 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
+        double double_6 = camera.getPos().z;
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
+        RenderSystem.rotatef(90, 1, 0, 0);
+        RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+        float size = 0.07F;
+        RenderSystem.scalef(-size, -size, size);
+        float float_3 = (float) (-textRenderer_1.getStringWidth(string_1)) / 2.0F + 0.4f;
+        RenderSystem.enableAlphaTest();
+        VertexConsumerProvider.Immediate vertexConsumerProvider$Immediate_1 = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
+        textRenderer_1.draw(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, Rotation3.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
+        vertexConsumerProvider$Immediate_1.draw();
+        RenderSystem.popMatrix();
+    }
+    
     static void loadConfig(File file) {
         try {
             redColor = 0xFF0000;
@@ -110,7 +159,9 @@ public class LightOverlay implements ClientModInitializer {
             properties.load(fis);
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "7"));
-            lineWidth = Float.valueOf((String) properties.computeIfAbsent("lineWidth", a -> "1"));
+            crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
+            showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
+            lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
             {
                 int r, g, b;
                 r = Integer.parseInt((String) properties.computeIfAbsent("yellowColorRed", a -> "255"));
@@ -145,6 +196,10 @@ public class LightOverlay implements ClientModInitializer {
         fos.write("# Light Overlay Config".getBytes());
         fos.write("\n".getBytes());
         fos.write(("reach=" + reach).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("crossLevel=" + crossLevel).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());
@@ -224,38 +279,57 @@ public class LightOverlay implements ClientModInitializer {
             if (LightOverlay.enabled) {
                 PlayerEntity playerEntity = client.player;
                 World world = client.world;
-                RenderSystem.enableDepthTest();
-                RenderSystem.shadeModel(7425);
-                RenderSystem.enableAlphaTest();
-                RenderSystem.defaultAlphaFunc();
-                RenderSystem.disableTexture();
-                RenderSystem.disableBlend();
-                RenderSystem.lineWidth(lineWidth);
-                RenderSystem.depthMask(false);
                 BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
-                Tessellator tessellator = Tessellator.getInstance();
-                BufferBuilder buffer = tessellator.getBuffer();
                 Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-                BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach)).forEach(pos -> {
-                    Biome biome = world.getBiome(pos);
-                    if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
-                        CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
-                        if (type != CrossType.NONE) {
-                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
-                            int color = type == CrossType.RED ? redColor : yellowColor;
-                            LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, playerEntity);
+                if (showNumber) {
+                    RenderSystem.enableTexture();
+                    RenderSystem.enableDepthTest();
+    
+                    RenderSystem.depthMask(true);
+                    for (BlockPos pos : BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
+                        Biome biome = world.getBiome(pos);
+                        if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
+                            int level = LightOverlay.getCrossLevel(pos, world, playerEntity);
+                            if (level >= 0) {
+                                VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+                                LightOverlay.renderLevel(client, camera, world, pos, level, playerEntity);
+                            }
                         }
                     }
-                });
-                RenderSystem.depthMask(true);
-                RenderSystem.enableBlend();
-                RenderSystem.enableTexture();
-                RenderSystem.shadeModel(7424);
+                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    RenderSystem.enableDepthTest();
+                } else {
+                    RenderSystem.enableDepthTest();
+                    RenderSystem.shadeModel(7425);
+                    RenderSystem.enableAlphaTest();
+                    RenderSystem.defaultAlphaFunc();
+                    RenderSystem.disableTexture();
+                    RenderSystem.disableBlend();
+                    RenderSystem.lineWidth(lineWidth);
+                    RenderSystem.depthMask(false);
+                    Tessellator tessellator = Tessellator.getInstance();
+                    BufferBuilder buffer = tessellator.getBuffer();
+                    for (BlockPos pos : BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
+                        Biome biome = world.getBiome(pos);
+                        if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
+                            CrossType type = LightOverlay.getCrossType(pos, world, playerEntity);
+                            if (type != CrossType.NONE) {
+                                VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+                                int color = type == CrossType.RED ? redColor : yellowColor;
+                                LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, playerEntity);
+                            }
+                        }
+                    }
+                    RenderSystem.depthMask(true);
+                    RenderSystem.enableBlend();
+                    RenderSystem.enableTexture();
+                    RenderSystem.shadeModel(7424);
+                }
             }
         });
     }
     
-    private static enum CrossType {
+    private enum CrossType {
         YELLOW,
         RED,
         NONE

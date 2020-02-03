@@ -9,6 +9,8 @@
   "text.lightoverlay.current_line_width": "The current line width is %s!",
   "config.lightoverlay.general": "General",
   "config.lightoverlay.reach": "Reach:",
+  "config.lightoverlay.crossLevel": "Light Level:",
+  "config.lightoverlay.showNumber": "Show Number Instead:",
   "config.lightoverlay.lineWidth": "Line Width:",
   "config.lightoverlay.yellowColor": "Yellow Color:",
   "config.lightoverlay.redColor": "Red Color:",

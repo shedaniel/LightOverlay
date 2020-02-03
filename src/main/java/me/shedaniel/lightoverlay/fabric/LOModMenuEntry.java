@@ -28,38 +28,22 @@ public class LOModMenuEntry implements ModMenuApi {
         
         ConfigEntryBuilder eb = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory("config.lightoverlay.general");
-        general.addEntry(eb.startIntSlider("config.lightoverlay.reach", LightOverlay.reach, 1, 50)
-                .setDefaultValue(7)
-                .setTextGetter(integer -> "Reach: " + integer + " Blocks")
-                .setSaveConsumer(integer -> LightOverlay.reach = integer)
-                .build()
-        );
-        general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700)
-                .setDefaultValue(100)
-                .setTextGetter(integer -> "Light Width: " + LightOverlay.FORMAT.format(integer / 100d))
-                .setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f)
-                .build()
-        );
-        general.addEntry(eb.startStrField("config.lightoverlay.yellowColor", "#" + toStringColor(LightOverlay.yellowColor))
-                .setDefaultValue("#FFFF00")
-                .setSaveConsumer(str -> LightOverlay.yellowColor = toIntColor(str))
-                .setErrorSupplier(s -> {
-                    if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
-                        return Optional.of(I18n.translate("config.lightoverlay.invalidColor"));
-                    else return Optional.empty();
-                })
-                .build()
-        );
-        general.addEntry(eb.startStrField("config.lightoverlay.redColor", "#" + toStringColor(LightOverlay.redColor))
-                .setDefaultValue("#FF0000")
-                .setSaveConsumer(str -> LightOverlay.redColor = toIntColor(str))
-                .setErrorSupplier(s -> {
-                    if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
-                        return Optional.of(I18n.translate("config.lightoverlay.invalidColor"));
-                    else return Optional.empty();
-                })
-                .build()
-        );
+        general.addEntry(eb.startIntSlider("config.lightoverlay.reach", LightOverlay.reach, 1, 50).setDefaultValue(7).setTextGetter(integer -> "Reach: " + integer + " Blocks").setSaveConsumer(integer -> LightOverlay.reach = integer).build());
+        general.addEntry(eb.startIntSlider("config.lightoverlay.crossLevel", LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> "Cross Level: " + integer).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build());
+        general.addEntry(eb.startBooleanToggle("config.lightoverlay.showNumber", LightOverlay.showNumber).setDefaultValue(false).setSaveConsumer(bool -> LightOverlay.showNumber = bool).build());
+        general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700).setDefaultValue(100).setTextGetter(integer -> "Light Width: " + LightOverlay.FORMAT.format(integer / 100d)).setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f).build());
+        general.addEntry(eb.startStrField("config.lightoverlay.yellowColor", "#" + toStringColor(LightOverlay.yellowColor)).setDefaultValue("#FFFF00").setSaveConsumer(str -> LightOverlay.yellowColor = toIntColor(str)).setErrorSupplier(s -> {
+            if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
+                return Optional.of(I18n.translate("config.lightoverlay.invalidColor"));
+            else
+                return Optional.empty();
+        }).build());
+        general.addEntry(eb.startStrField("config.lightoverlay.redColor", "#" + toStringColor(LightOverlay.redColor)).setDefaultValue("#FF0000").setSaveConsumer(str -> LightOverlay.redColor = toIntColor(str)).setErrorSupplier(s -> {
+            if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
+                return Optional.of(I18n.translate("config.lightoverlay.invalidColor"));
+            else
+                return Optional.empty();
+        }).build());
         
         return builder.setSavingRunnable(() -> {
             try {
@@ -91,7 +75,7 @@ public class LOModMenuEntry implements ModMenuApi {
     private String toStringColor(int toolColor) {
         String r = Integer.toHexString((toolColor >> 16) & 0xFF);
         String g = Integer.toHexString((toolColor >> 8) & 0xFF);
-        String b = Integer.toHexString((toolColor >> 0) & 0xFF);
+        String b = Integer.toHexString(toolColor & 0xFF);
         if (r.length() == 1)
             r = "0" + r;
         if (g.length() == 1)

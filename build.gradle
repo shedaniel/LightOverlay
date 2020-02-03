@@ -10,11 +10,11 @@ targetCompatibility = 1.8
 archivesBaseName = "LightOverlay"
 version = ((String) project.mod_version).contains("unstable") ? (project.mod_version + "." + buildTime()) : project.mod_version
 
-def minecraftVersion = "1.15-pre3"
-def yarnVersion = "1.15-pre3+build.2"
-def fabricVersion = "0.4.18+build.271-1.15"
-def cloth_version = "1.0.1-unstable.201912010433"
-def cloth_config_version="2.5.3"
+def minecraftVersion = "1.15.2"
+def yarnVersion = "1.15.2+build.1"
+def fabricVersion = "0.4.29+build.290-1.15"
+def cloth_version = "1.2.0"
+def cloth_config_version="2.9.2"
 
 minecraft {
 }
@@ -49,9 +49,9 @@ dependencies {
         transitive = false
     }
     modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}") {
-        transitive = false
+        include name: "basic-math"
     }
-    modImplementation("io.github.prospector:modmenu:1.7.13-unstable.19w38b+build.5") {
+    modImplementation("io.github.prospector:modmenu:1.8.5+build.23") {
         transitive = false
     }
     include("me.shedaniel.cloth:cloth-events:${cloth_version}") {
