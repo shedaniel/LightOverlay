@@ -6,7 +6,7 @@
   "version": "${version}",
   "environment": "client",
   "authors": [
-    "Danielshe"
+    "shedaniel"
   ],
   "contact": {
     "homepage": "https://minecraft.curseforge.com/projects/light-overlay",
@@ -25,7 +25,8 @@
   "icon": "icon.png",
   "requires": {
     "fabricloader": ">=0.4.0",
-    "cloth": "*"
+    "cloth": "~2-",
+    "minecraft": "~1.16-Snapshot.20.10.a"
   },
   "custom": {
     "modmenu:clientsideOnly": true

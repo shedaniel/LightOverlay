@@ -1,5 +1,6 @@
 package me.shedaniel.lightoverlay.fabric;
 
+import io.github.prospector.modmenu.api.ConfigScreenFactory;
 import io.github.prospector.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
@@ -10,7 +11,6 @@ import net.minecraft.util.math.MathHelper;
 
 import java.util.Locale;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class LOModMenuEntry implements ModMenuApi {
     @Override
@@ -19,7 +19,7 @@ public class LOModMenuEntry implements ModMenuApi {
     }
     
     @Override
-    public Function<Screen, ? extends Screen> getConfigScreenFactory() {
+    public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return this::getConfigScreenByCloth;
     }
     

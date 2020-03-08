@@ -1,7 +1,7 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'fabric-loom' version '0.2.5-SNAPSHOT'
+    id 'fabric-loom' version '0.2.7-SNAPSHOT'
 }
 
 sourceCompatibility = 1.8
@@ -10,11 +10,11 @@ targetCompatibility = 1.8
 archivesBaseName = "LightOverlay"
 version = ((String) project.mod_version).contains("unstable") ? (project.mod_version + "." + buildTime()) : project.mod_version
 
-def minecraftVersion = "1.15.2"
-def yarnVersion = "1.15.2+build.1"
-def fabricVersion = "0.4.29+build.290-1.15"
-def cloth_version = "1.2.0"
-def cloth_config_version="2.9.2"
+def minecraftVersion = "20w10a"
+def yarnVersion = "20w10a+build.2"
+def fabricVersion = "0.4.34+build.303-1.16"
+def cloth_version = "2.0.0-unstable.202003051905"
+def cloth_config_version="3.0.1-unstable.202003051928"
 
 minecraft {
 }
@@ -40,8 +40,8 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraftVersion}"
-    mappings "net.fabricmc:yarn:${yarnVersion}"
-    modCompile "net.fabricmc:fabric-loader:0.7.2+build.174"
+    mappings "net.fabricmc:yarn:${yarnVersion}:v2"
+    modCompile "net.fabricmc:fabric-loader:0.7.8+build.186"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
@@ -49,7 +49,7 @@ dependencies {
         transitive = false
     }
     modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}")
-    modImplementation("io.github.prospector:modmenu:1.8.5+build.23") {
+    modImplementation("io.github.prospector:modmenu:1.10.2+build.1") {
         transitive = false
     }
     include("me.shedaniel.cloth:cloth-events:${cloth_version}") {
