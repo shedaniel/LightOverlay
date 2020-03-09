@@ -13,7 +13,6 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
@@ -81,10 +80,10 @@ public class LightOverlayClient {
         }
     }
     
-    public static CrossType getCrossType(BlockPos pos, World world, PlayerEntity playerEntity) {
-        BlockState blockBelowState = world.getBlockState(pos.down());
+    public static CrossType getCrossType(BlockPos pos, BlockPos down, World world, ISelectionContext playerEntity) {
+        BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, ISelectionContext.forEntity(playerEntity));
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, playerEntity);
         if (!blockUpperState.getFluidState().isEmpty())
             return CrossType.NONE;
         /* WorldEntitySpawner.func_222266_a */
@@ -100,7 +99,7 @@ public class LightOverlayClient {
         if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
-        if (!blockBelowState.canEntitySpawn(world, pos.down(), testingEntityType))
+        if (!blockBelowState.canEntitySpawn(world, down, testingEntityType))
             return CrossType.NONE;
         if (world.func_226658_a_(LightType.BLOCK, pos) > crossLevel)
             return CrossType.NONE;
@@ -109,34 +108,26 @@ public class LightOverlayClient {
         return CrossType.RED;
     }
     
-    public static int getCrossLevel(BlockPos pos, World world, PlayerEntity playerEntity) {
-        BlockState blockBelowState = world.getBlockState(pos.down());
+    public static int getCrossLevel(BlockPos pos, BlockPos down, World world, ISelectionContext context) {
+        BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, ISelectionContext.forEntity(playerEntity));
+        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, context);
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, context);
         if (!blockUpperState.getFluidState().isEmpty())
             return -1;
-        /* WorldEntitySpawner.func_222266_a */
-        // Check if the outline is full
-        if (Block.doesSideFillSquare(upperCollisionShape, Direction.UP))
+        if (!blockBelowState.getFluidState().isEmpty())
             return -1;
-        // Check if there is power
-        if (blockUpperState.canProvidePower())
+        if (blockBelowState.isAir(world, down))
             return -1;
-        // Check if the collision has a bump
-        if (upperCollisionShape.getEnd(Direction.Axis.Y) > 0)
-            return -1;
-        if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
-            return -1;
-        // Check block state allow spawning (excludes bedrock and barriers automatically)
-        if (!blockBelowState.canEntitySpawn(world, pos.down(), testingEntityType))
+        if (!blockUpperState.isAir(world, pos))
             return -1;
         return world.func_226658_a_(LightType.BLOCK, pos);
     }
     
-    public static void renderCross(ActiveRenderInfo info, Tessellator tessellator, BufferBuilder buffer, World world, BlockPos pos, int color, PlayerEntity entity) {
+    public static void renderCross(ActiveRenderInfo info, Tessellator tessellator, BufferBuilder buffer, World world, BlockPos pos, int color, ISelectionContext context) {
         double d0 = info.getProjectedView().x;
         double d1 = info.getProjectedView().y - .005D;
-        VoxelShape upperOutlineShape = world.getBlockState(pos).getShape(world, pos, ISelectionContext.forEntity(entity));
+        VoxelShape upperOutlineShape = world.getBlockState(pos).getShape(world, pos, context);
         if (!upperOutlineShape.isEmpty())
             d1 -= upperOutlineShape.getEnd(Direction.Axis.Y);
         double d2 = info.getProjectedView().z;
@@ -151,14 +142,14 @@ public class LightOverlayClient {
         tessellator.draw();
     }
     
-    public static void renderLevel(Minecraft minecraft, ActiveRenderInfo info, World world, BlockPos pos, int level, PlayerEntity entity) {
+    public static void renderLevel(Minecraft minecraft, ActiveRenderInfo info, World world, BlockPos pos, BlockPos down, int level, ISelectionContext context) {
         String string_1 = String.valueOf(level);
         FontRenderer fontRenderer = minecraft.fontRenderer;
         double double_4 = info.getProjectedView().x;
         double double_5 = info.getProjectedView().y;
-        VoxelShape upperOutlineShape = world.getBlockState(pos).getShape(world, pos, ISelectionContext.forEntity(entity));
+        VoxelShape upperOutlineShape = world.getBlockState(down).getShape(world, down, context);
         if (!upperOutlineShape.isEmpty())
-            double_5 -= upperOutlineShape.getEnd(Direction.Axis.Y);
+            double_5 += 1 - upperOutlineShape.getEnd(Direction.Axis.Y);
         double double_6 = info.getProjectedView().z;
         RenderSystem.pushMatrix();
         RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
@@ -228,6 +219,7 @@ public class LightOverlayClient {
             RenderSystem.multMatrix(event.getMatrixStack().func_227866_c_().func_227870_a_());
             Minecraft client = Minecraft.getInstance();
             ClientPlayerEntity playerEntity = client.player;
+            ISelectionContext context = ISelectionContext.forEntity(playerEntity);
             World world = client.world;
             BlockPos playerPos = playerEntity.getPosition();
             ActiveRenderInfo info = client.gameRenderer.getActiveRenderInfo();
@@ -239,10 +231,10 @@ public class LightOverlayClient {
                 for (BlockPos pos : BlockPos.getAllInBoxMutable(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
                     Biome biome = world.func_226691_t_(pos);
                     if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
-                        int level = LightOverlayClient.getCrossLevel(pos, world, playerEntity);
+                        BlockPos down = pos.down();
+                        int level = LightOverlayClient.getCrossLevel(pos, down, world, context);
                         if (level >= 0) {
-                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
-                            LightOverlayClient.renderLevel(client, info, world, pos, level, playerEntity);
+                            LightOverlayClient.renderLevel(client, info, world, pos, down, level, context);
                         }
                     }
                 }
@@ -258,11 +250,11 @@ public class LightOverlayClient {
                 for (BlockPos pos : BlockPos.getAllInBoxMutable(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
                     Biome biome = world.func_226691_t_(pos);
                     if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
-                        CrossType type = LightOverlayClient.getCrossType(pos, world, playerEntity);
+                        BlockPos down = pos.down();
+                        CrossType type = LightOverlayClient.getCrossType(pos, down, world, context);
                         if (type != CrossType.NONE) {
-                            VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
                             int color = type == CrossType.RED ? redColor : yellowColor;
-                            LightOverlayClient.renderCross(info, tessellator, buffer, world, pos, color, playerEntity);
+                            LightOverlayClient.renderCross(info, tessellator, buffer, world, pos, color, context);
                         }
                     }
                 }
