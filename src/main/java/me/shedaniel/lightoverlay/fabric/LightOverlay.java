@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.cloth.hooks.ClothClientHooks;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.FabricKeyBinding;
-import net.fabricmc.fabric.impl.client.keybinding.KeyBindingRegistryImpl;
+import net.fabricmc.fabric.api.client.keybinding.KeyBindingRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -54,8 +54,8 @@ public class LightOverlay implements ClientModInitializer {
     private static boolean enabled = false;
     private static EntityType<Entity> testingEntityType;
     
-    public static CrossType getCrossType(BlockPos pos, World world, EntityContext entityContext) {
-        BlockState blockBelowState = world.getBlockState(pos.down());
+    public static CrossType getCrossType(BlockPos pos, BlockPos down, World world, EntityContext entityContext) {
+        BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
         if (!blockUpperState.getFluidState().isEmpty())
@@ -72,7 +72,7 @@ public class LightOverlay implements ClientModInitializer {
         if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
-        if (!blockBelowState.allowsSpawning(world, pos.down(), testingEntityType))
+        if (!blockBelowState.allowsSpawning(world, down, testingEntityType))
             return CrossType.NONE;
         if (world.getLightLevel(LightType.BLOCK, pos) > crossLevel)
             return CrossType.NONE;
@@ -81,10 +81,10 @@ public class LightOverlay implements ClientModInitializer {
         return CrossType.RED;
     }
     
-    public static int getCrossLevel(BlockPos pos, World world, EntityContext entityContext) {
-        BlockState blockBelowState = world.getBlockState(pos.down());
+    public static int getCrossLevel(BlockPos pos, BlockPos down, World world, EntityContext entityContext) {
+        BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, pos.down(), entityContext);
+        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, entityContext);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
         if (!blockUpperState.getFluidState().isEmpty())
             return -1;
@@ -97,10 +97,10 @@ public class LightOverlay implements ClientModInitializer {
         return world.getLightLevel(LightType.BLOCK, pos);
     }
     
-    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, PlayerEntity entity) {
+    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, EntityContext entityContext) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
-        VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, EntityContext.of(entity));
+        VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, entityContext);
         if (!upperOutlineShape.isEmpty())
             d1 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
         double d2 = camera.getPos().z;
@@ -116,11 +116,14 @@ public class LightOverlay implements ClientModInitializer {
         tessellator.draw();
     }
     
-    public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, int level, PlayerEntity entity) {
+    public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, EntityContext entityContext) {
         String string_1 = String.valueOf(level);
         TextRenderer textRenderer_1 = client.textRenderer;
         double double_4 = camera.getPos().x;
         double double_5 = camera.getPos().y;
+        VoxelShape upperOutlineShape = world.getBlockState(down).getOutlineShape(world, down, entityContext);
+        if (!upperOutlineShape.isEmpty())
+            double_5 += 1 - upperOutlineShape.getMaximum(Direction.Axis.Y);
         double double_6 = camera.getPos().z;
         RenderSystem.pushMatrix();
         RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
@@ -213,12 +216,12 @@ public class LightOverlay implements ClientModInitializer {
         // Setup
         testingEntityType = EntityType.Builder.create(EntityCategory.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
         MinecraftClient client = MinecraftClient.getInstance();
-        KeyBindingRegistryImpl.INSTANCE.addCategory(KEYBIND_CATEGORY);
-        KeyBindingRegistryImpl.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
-        KeyBindingRegistryImpl.INSTANCE.register(increaseReach = FabricKeyBinding.Builder.create(INCREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistryImpl.INSTANCE.register(decreaseReach = FabricKeyBinding.Builder.create(DECREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistryImpl.INSTANCE.register(increaseLineWidth = FabricKeyBinding.Builder.create(INCREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistryImpl.INSTANCE.register(decreaseLineWidth = FabricKeyBinding.Builder.create(DECREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
+        KeyBindingRegistry.INSTANCE.addCategory(KEYBIND_CATEGORY);
+        KeyBindingRegistry.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
+        KeyBindingRegistry.INSTANCE.register(increaseReach = FabricKeyBinding.Builder.create(INCREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
+        KeyBindingRegistry.INSTANCE.register(decreaseReach = FabricKeyBinding.Builder.create(DECREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
+        KeyBindingRegistry.INSTANCE.register(increaseLineWidth = FabricKeyBinding.Builder.create(INCREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
+        KeyBindingRegistry.INSTANCE.register(decreaseLineWidth = FabricKeyBinding.Builder.create(DECREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
         ClothClientHooks.HANDLE_INPUT.register(minecraftClient -> {
             while (enableOverlay.wasPressed())
                 enabled = !enabled;
@@ -277,10 +280,10 @@ public class LightOverlay implements ClientModInitializer {
                     for (BlockPos pos : BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
                         Biome biome = world.getBiome(pos);
                         if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
-                            int level = LightOverlay.getCrossLevel(pos, world, entityContext);
+                            BlockPos down = pos.down();
+                            int level = LightOverlay.getCrossLevel(pos, down, world, entityContext);
                             if (level >= 0) {
-                                VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
-                                LightOverlay.renderLevel(client, camera, world, pos, level, playerEntity);
+                                LightOverlay.renderLevel(client, camera, world, pos, down, level, entityContext);
                             }
                         }
                     }
@@ -300,11 +303,11 @@ public class LightOverlay implements ClientModInitializer {
                     for (BlockPos pos : BlockPos.iterate(playerPos.add(-reach, -reach, -reach), playerPos.add(reach, reach, reach))) {
                         Biome biome = world.getBiome(pos);
                         if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
-                            CrossType type = LightOverlay.getCrossType(pos, world, entityContext);
+                            BlockPos down = pos.down();
+                            CrossType type = LightOverlay.getCrossType(pos, down, world, entityContext);
                             if (type != CrossType.NONE) {
-                                VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
                                 int color = type == CrossType.RED ? redColor : yellowColor;
-                                LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, playerEntity);
+                                LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, entityContext);
                             }
                         }
                     }
