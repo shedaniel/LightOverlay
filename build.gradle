@@ -8,13 +8,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 archivesBaseName = "LightOverlay"
-version = ((String) project.mod_version).contains("unstable") ? (project.mod_version + "." + buildTime()) : project.mod_version
+version = project.mod_version
 
-def minecraftVersion = "20w10a"
-def yarnVersion = "20w10a+build.2"
-def fabricVersion = "0.4.34+build.303-1.16"
+def minecraftVersion = "20w12a"
+def yarnVersion = "20w12a+build.5"
+def fabricVersion = "0.5.5+build.311-1.16"
 def cloth_version = "2.0.0-unstable.202003051905"
-def cloth_config_version="3.0.1-unstable.202003051928"
+def cloth_config_version="3.1.0-unstable"
 
 minecraft {
 }
@@ -26,16 +26,8 @@ processResources {
     inputs.property "version", project.version
 }
 
-static def buildTime() {
-    def df = new SimpleDateFormat("yyyyMMddHHmm")
-    df.setTimeZone(TimeZone.getTimeZone("UTC"))
-    return df.format(new Date())
-}
-
 repositories {
     jcenter()
-    maven { url "https://tehnut.info/maven/" }
-    maven { url "https://minecraft.curseforge.com/api/maven" }
 }
 
 dependencies {
