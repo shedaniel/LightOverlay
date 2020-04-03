@@ -12,10 +12,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.Rotation3;
+import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCategory;
-import net.minecraft.entity.EntityContext;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.BlockTags;
@@ -54,10 +54,10 @@ public class LightOverlay implements ClientModInitializer {
     private static boolean enabled = false;
     private static EntityType<Entity> testingEntityType;
     
-    public static CrossType getCrossType(BlockPos pos, BlockPos down, World world, EntityContext entityContext) {
+    public static CrossType getCrossType(BlockPos pos, BlockPos down, World world, ShapeContext shapeContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, shapeContext);
         if (!blockUpperState.getFluidState().isEmpty())
             return CrossType.NONE;
         // Check if the outline is full
@@ -81,11 +81,11 @@ public class LightOverlay implements ClientModInitializer {
         return CrossType.RED;
     }
     
-    public static int getCrossLevel(BlockPos pos, BlockPos down, World world, EntityContext entityContext) {
+    public static int getCrossLevel(BlockPos pos, BlockPos down, World world, ShapeContext shapeContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, entityContext);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
+        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, shapeContext);
+        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, shapeContext);
         if (!blockUpperState.getFluidState().isEmpty())
             return -1;
         if (!blockBelowState.getFluidState().isEmpty())
@@ -97,10 +97,10 @@ public class LightOverlay implements ClientModInitializer {
         return world.getLightLevel(LightType.BLOCK, pos);
     }
     
-    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, EntityContext entityContext) {
+    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, ShapeContext shapeContext) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
-        VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, entityContext);
+        VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, shapeContext);
         if (!upperOutlineShape.isEmpty())
             d1 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
         double d2 = camera.getPos().z;
@@ -116,12 +116,12 @@ public class LightOverlay implements ClientModInitializer {
         tessellator.draw();
     }
     
-    public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, EntityContext entityContext) {
+    public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, ShapeContext shapeContext) {
         String string_1 = String.valueOf(level);
         TextRenderer textRenderer_1 = client.textRenderer;
         double double_4 = camera.getPos().x;
         double double_5 = camera.getPos().y;
-        VoxelShape upperOutlineShape = world.getBlockState(down).getOutlineShape(world, down, entityContext);
+        VoxelShape upperOutlineShape = world.getBlockState(down).getOutlineShape(world, down, shapeContext);
         if (!upperOutlineShape.isEmpty())
             double_5 += 1 - upperOutlineShape.getMaximum(Direction.Axis.Y);
         double double_6 = camera.getPos().z;
@@ -134,7 +134,7 @@ public class LightOverlay implements ClientModInitializer {
         float float_3 = (float) (-textRenderer_1.getStringWidth(string_1)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
         VertexConsumerProvider.Immediate vertexConsumerProvider$Immediate_1 = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        textRenderer_1.draw(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, Rotation3.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
+        textRenderer_1.draw(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, AffineTransformation.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
         vertexConsumerProvider$Immediate_1.draw();
         RenderSystem.popMatrix();
     }
@@ -269,7 +269,7 @@ public class LightOverlay implements ClientModInitializer {
         ClothClientHooks.DEBUG_RENDER_PRE.register(() -> {
             if (LightOverlay.enabled) {
                 PlayerEntity playerEntity = client.player;
-                EntityContext entityContext = EntityContext.of(playerEntity);
+                ShapeContext shapeContext = ShapeContext.of(playerEntity);
                 World world = client.world;
                 BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
                 Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
@@ -281,9 +281,9 @@ public class LightOverlay implements ClientModInitializer {
                         Biome biome = world.getBiome(pos);
                         if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
                             BlockPos down = pos.down();
-                            int level = LightOverlay.getCrossLevel(pos, down, world, entityContext);
+                            int level = LightOverlay.getCrossLevel(pos, down, world, shapeContext);
                             if (level >= 0) {
-                                LightOverlay.renderLevel(client, camera, world, pos, down, level, entityContext);
+                                LightOverlay.renderLevel(client, camera, world, pos, down, level, shapeContext);
                             }
                         }
                     }
@@ -304,10 +304,10 @@ public class LightOverlay implements ClientModInitializer {
                         Biome biome = world.getBiome(pos);
                         if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
                             BlockPos down = pos.down();
-                            CrossType type = LightOverlay.getCrossType(pos, down, world, entityContext);
+                            CrossType type = LightOverlay.getCrossType(pos, down, world, shapeContext);
                             if (type != CrossType.NONE) {
                                 int color = type == CrossType.RED ? redColor : yellowColor;
-                                LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, entityContext);
+                                LightOverlay.renderCross(tessellator, buffer, camera, world, pos, color, shapeContext);
                             }
                         }
                     }
