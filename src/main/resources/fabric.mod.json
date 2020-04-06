@@ -26,7 +26,7 @@
   "requires": {
     "fabricloader": ">=0.4.0",
     "cloth": "~2-",
-    "minecraft": "~1.16-Snapshot.20.10.a"
+    "minecraft": "~1.16-Snapshot.20.13.b"
   },
   "custom": {
     "modmenu:clientsideOnly": true
