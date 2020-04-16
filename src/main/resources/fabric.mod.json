@@ -28,6 +28,10 @@
     "cloth": "~2-",
     "minecraft": "~1.16-Snapshot.20.13.b"
   },
+  "mixins": [
+    "lightoverlay.mixins.json"
+  ],
+  "accessWidener": "lightoverlay.accesswidener",
   "custom": {
     "modmenu:clientsideOnly": true
   }

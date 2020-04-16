@@ -24,7 +24,7 @@ public class LOModMenuEntry implements ModMenuApi {
         
         ConfigEntryBuilder eb = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory("config.lightoverlay.general");
-        general.addEntry(eb.startIntSlider("config.lightoverlay.reach", LightOverlay.reach, 1, 50).setDefaultValue(7).setTextGetter(integer -> "Reach: " + integer + " Blocks").setSaveConsumer(integer -> LightOverlay.reach = integer).build());
+        general.addEntry(eb.startIntSlider("config.lightoverlay.reach", LightOverlay.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> "Reach: " + integer + " Blocks").setSaveConsumer(integer -> LightOverlay.reach = integer).build());
         general.addEntry(eb.startIntSlider("config.lightoverlay.crossLevel", LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> "Cross Level: " + integer).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build());
         general.addEntry(eb.startBooleanToggle("config.lightoverlay.showNumber", LightOverlay.showNumber).setDefaultValue(false).setSaveConsumer(bool -> LightOverlay.showNumber = bool).build());
         general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700).setDefaultValue(100).setTextGetter(integer -> "Light Width: " + LightOverlay.FORMAT.format(integer / 100d)).setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f).build());
