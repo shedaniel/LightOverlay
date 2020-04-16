@@ -165,7 +165,6 @@ public class LightOverlay implements ClientModInitializer {
                     }
                 }
             }
-            System.out.println(CHUNK_MAP.size());
         }
         CHUNK_MAP.put(chunkPos, map);
     }
