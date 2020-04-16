@@ -8,17 +8,22 @@ buildscript {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
+
+plugins {
+    id "com.wynprice.cursemaven" version "2.1.1"
+}
+
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 
-version = "4.3"
+version = "4.4"
 group = "me.shedaniel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "LightOverlay"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20191218-1.14.3'
+    mappings channel: 'snapshot', version: '20200408-1.15.1'
     runs {
         client {
             workingDirectory project.file('run')
@@ -48,12 +53,12 @@ minecraft {
 }
 
 repositories {
-    maven { url "https://minecraft.curseforge.com/api/maven/" }
+    maven { url "https://files.minecraftforge.net/maven" }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.1-30.0.7'
-    implementation fg.deobf("cloth-config-forge:ClothConfig2:2.0")
+    minecraft 'net.minecraftforge:forge:1.15.2-31.1.39'
+    implementation fg.deobf("curse.maven:cloth-config-forge:2844737")
 }
 
 jar {

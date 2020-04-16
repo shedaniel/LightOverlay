@@ -18,7 +18,7 @@ public class LightOverlayCloth {
             
             ConfigEntryBuilder eb = builder.getEntryBuilder();
             ConfigCategory general = builder.getOrCreateCategory("config.lightoverlay-forge.general");
-            general.addEntry(eb.startIntSlider("config.lightoverlay-forge.reach", LightOverlayClient.reach, 1, 50).setDefaultValue(7).setTextGetter(integer -> "Reach: " + integer + " Blocks").setSaveConsumer(integer -> LightOverlayClient.reach = integer).build());
+            general.addEntry(eb.startIntSlider("config.lightoverlay-forge.reach", LightOverlayClient.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> "Reach: " + integer + " Blocks").setSaveConsumer(integer -> LightOverlayClient.reach = integer).build());
             general.addEntry(eb.startIntSlider("config.lightoverlay-forge.crossLevel", LightOverlayClient.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> "Cross Level: " + integer).setSaveConsumer(integer -> LightOverlayClient.crossLevel = integer).build());
             general.addEntry(eb.startBooleanToggle("config.lightoverlay-forge.showNumber", LightOverlayClient.showNumber).setDefaultValue(false).setSaveConsumer(bool -> LightOverlayClient.showNumber = bool).build());
             general.addEntry(eb.startIntSlider("config.lightoverlay-forge.lineWidth", MathHelper.floor(LightOverlayClient.lineWidth * 100), 100, 700).setDefaultValue(100).setTextGetter(integer -> "Light Width: " + LightOverlayClient.FORMAT.format(integer / 100d)).setSaveConsumer(integer -> LightOverlayClient.lineWidth = integer / 100f).build());
