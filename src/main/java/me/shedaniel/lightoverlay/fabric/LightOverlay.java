@@ -25,6 +25,8 @@ import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.BlockTags;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
@@ -231,8 +233,9 @@ public class LightOverlay implements ClientModInitializer {
         tessellator.draw();
     }
     
+    @SuppressWarnings("deprecation")
     public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, ShapeContext shapeContext) {
-        String string_1 = String.valueOf(level);
+        Text text = new LiteralText(String.valueOf(level));
         TextRenderer textRenderer_1 = client.textRenderer;
         double double_4 = camera.getPos().x;
         double double_5 = camera.getPos().y;
@@ -246,11 +249,11 @@ public class LightOverlay implements ClientModInitializer {
         RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
         RenderSystem.scalef(-size, -size, size);
-        float float_3 = (float) (-textRenderer_1.getStringWidth(string_1)) / 2.0F + 0.4f;
+        float float_3 = (float) (-textRenderer_1.method_27525(text)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
-        VertexConsumerProvider.Immediate vertexConsumerProvider$Immediate_1 = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        textRenderer_1.draw(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, AffineTransformation.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
-        vertexConsumerProvider$Immediate_1.draw();
+        VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
+        textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+        immediate.draw();
         RenderSystem.popMatrix();
     }
     
@@ -411,14 +414,12 @@ public class LightOverlay implements ClientModInitializer {
                             }
                         }
                     }
-                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                     RenderSystem.enableDepthTest();
                 } else {
                     RenderSystem.enableDepthTest();
                     RenderSystem.disableTexture();
                     RenderSystem.enableBlend();
                     RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
-                    RenderSystem.disableLighting();
                     GL11.glEnable(GL11.GL_LINE_SMOOTH);
                     RenderSystem.lineWidth(lineWidth);
                     Tessellator tessellator = Tessellator.getInstance();
