@@ -38,7 +38,7 @@ To provide users with NEI-like light overlay.
     # Does this dependency have to exist - if not, ordering below must be specified
     mandatory=true #mandatory
     # The version range of the dependency
-    versionRange="[2.0,)" #mandatory
+    versionRange="[3.0,)" #mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
     side="CLIENT"

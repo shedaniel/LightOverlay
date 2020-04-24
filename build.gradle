@@ -16,7 +16,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 
-version = "4.4"
+version = "4.5"
 group = "me.shedaniel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "LightOverlay"
 
@@ -58,7 +58,7 @@ repositories {
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.15.2-31.1.39'
-    implementation fg.deobf("curse.maven:cloth-config-forge:2844737")
+    implementation fg.deobf("curse.maven:cloth-config-forge:2938583")
 }
 
 jar {
