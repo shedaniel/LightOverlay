@@ -11,6 +11,8 @@
   "config.lightoverlay-forge.reach": "Reach:",
   "config.lightoverlay-forge.crossLevel": "Light Level:",
   "config.lightoverlay-forge.showNumber": "Show Number Instead:",
+  "config.lightoverlay-forge.smoothLines": "Smooth Lines:",
+  "config.lightoverlay-forge.underwater": "Display Underwater:",
   "config.lightoverlay-forge.lineWidth": "Line Width:",
   "config.lightoverlay-forge.yellowColor": "Yellow Color:",
   "config.lightoverlay-forge.redColor": "Red Color:",

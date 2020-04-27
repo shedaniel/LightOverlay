@@ -73,6 +73,8 @@ public class LightOverlayClient {
     static int reach = 12;
     static int crossLevel = 7;
     static boolean showNumber = false;
+    static boolean smoothLines = true;
+    static boolean underwater = false;
     static EntityType<Entity> testingEntityType;
     static float lineWidth = 1.0F;
     static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
@@ -114,7 +116,7 @@ public class LightOverlayClient {
         BlockState blockBelowState = reader.getBlockState(down);
         BlockState blockUpperState = reader.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(reader, pos, selectionContext);
-        if (!blockUpperState.getFluidState().isEmpty())
+        if (!underwater && !blockUpperState.getFluidState().isEmpty())
             return CrossType.NONE;
         /* WorldEntitySpawner.func_222266_a */
         // Check if the outline is full
@@ -143,13 +145,13 @@ public class LightOverlayClient {
         BlockState blockUpperState = reader.getBlockState(pos);
         VoxelShape collisionShape = blockBelowState.getCollisionShape(reader, down, context);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(reader, pos, context);
-        if (!blockUpperState.getFluidState().isEmpty())
+        if (!underwater && !blockUpperState.getFluidState().isEmpty())
             return -1;
         if (!blockBelowState.getFluidState().isEmpty())
             return -1;
         if (blockBelowState.isAir(reader, down))
             return -1;
-        if (!blockUpperState.isAir(reader, pos))
+        if (Block.doesSideFillSquare(upperCollisionShape, Direction.DOWN))
             return -1;
         return light.getLightFor(pos);
     }
@@ -336,12 +338,9 @@ public class LightOverlayClient {
         CHUNK_MAP.put(chunkPos, map);
     }
     
-    @SubscribeEvent
-    public static void renderWorldLast(RenderWorldLastEvent event) {
+    public static void renderWorldLast() {
         if (LightOverlayClient.enabled) {
             RenderSystem.pushMatrix();
-            RenderSystem.loadIdentity();
-            RenderSystem.multMatrix(event.getMatrixStack().getLast().getMatrix());
             Minecraft client = Minecraft.getInstance();
             ClientPlayerEntity playerEntity = client.player;
             int playerPosX = ((int) playerEntity.getPosX()) >> 4;
@@ -372,11 +371,12 @@ public class LightOverlayClient {
                 RenderSystem.enableDepthTest();
             } else {
                 RenderSystem.enableDepthTest();
+                RenderSystem.shadeModel(7425);
+                RenderSystem.enableAlphaTest();
+                RenderSystem.defaultAlphaFunc();
                 RenderSystem.disableTexture();
-                RenderSystem.enableBlend();
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                RenderSystem.disableLighting();
-                GL11.glEnable(GL11.GL_LINE_SMOOTH);
+                RenderSystem.disableBlend();
+                if (smoothLines) GL11.glEnable(GL11.GL_LINE_SMOOTH);
                 RenderSystem.lineWidth(lineWidth);
                 Tessellator tessellator = Tessellator.getInstance();
                 BufferBuilder buffer = tessellator.getBuffer();
@@ -396,9 +396,10 @@ public class LightOverlayClient {
                         }
                     }
                 }
-                RenderSystem.disableBlend();
+                RenderSystem.enableBlend();
                 RenderSystem.enableTexture();
-                GL11.glDisable(GL11.GL_LINE_SMOOTH);
+                RenderSystem.shadeModel(7424);
+                if (smoothLines) GL11.glDisable(GL11.GL_LINE_SMOOTH);
             }
             RenderSystem.popMatrix();
         }
@@ -423,6 +424,8 @@ public class LightOverlayClient {
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
+            smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
+            underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
             lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
             {
                 int r, g, b;
@@ -445,6 +448,9 @@ public class LightOverlayClient {
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            showNumber = false;
+            smoothLines = true;
+            underwater = false;
             try {
                 saveConfig(file);
             } catch (IOException ex) {
@@ -462,6 +468,10 @@ public class LightOverlayClient {
         fos.write(("crossLevel=" + crossLevel).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("smoothLines=" + smoothLines).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("underwater=" + underwater).getBytes());
         fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());

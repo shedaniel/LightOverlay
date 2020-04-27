@@ -9,13 +9,13 @@ function initializeCoreMod() {
         "light-overlay-forge": {
             'target': {
                 'type': 'CLASS',
-                'name': 'net.minecraft.network.NetworkManager'
+                'name': 'net.minecraft.client.renderer.debug.DebugRenderer'
             },
             'transformer': function (classNode) {
-                var processPacket = ASMAPI.mapMethod("func_197664_a");
+                var render = ASMAPI.mapMethod("func_229019_a_");
                 for (i in classNode.methods) {
                     var method = classNode.methods[i];
-                    if (method.name === processPacket) {
+                    if (method.name === render) {
                         var instructions = method.instructions;
                         var insnArray = instructions.toArray();
                         for (j in insnArray) {
@@ -23,7 +23,7 @@ function initializeCoreMod() {
                             if (instruction instanceof LabelNode) {
                                 instructions.insertBefore(instruction, new LabelNode());
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
-                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/lightoverlay/LightOverlay", "processPacket", "(Lnet/minecraft/network/IPacket;)V", false));
+                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/lightoverlay/LightOverlayClient", "renderWorldLast", "()V", false));
                                 break;
                             }
                         }

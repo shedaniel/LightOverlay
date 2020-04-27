@@ -1,3 +1,4 @@
 {
-  "NetworkManager": "META-INF/NetworkManager.js"
+  "NetworkManager": "META-INF/NetworkManager.js",
+  "WorldRenderer": "META-INF/WorldRenderer.js"
 }
