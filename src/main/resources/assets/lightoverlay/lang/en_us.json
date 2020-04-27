@@ -11,6 +11,8 @@
   "config.lightoverlay.reach": "Reach:",
   "config.lightoverlay.crossLevel": "Light Level:",
   "config.lightoverlay.showNumber": "Show Number Instead:",
+  "config.lightoverlay.smoothLines": "Smooth Lines:",
+  "config.lightoverlay.underwater": "Display Underwater:",
   "config.lightoverlay.lineWidth": "Line Width:",
   "config.lightoverlay.yellowColor": "Yellow Color:",
   "config.lightoverlay.redColor": "Red Color:",

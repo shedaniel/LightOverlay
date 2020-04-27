@@ -62,6 +62,8 @@ public class LightOverlay implements ClientModInitializer {
     static int reach = 12;
     static int crossLevel = 7;
     static boolean showNumber = false;
+    static boolean smoothLines = true;
+    static boolean underwater = false;
     static float lineWidth = 1.0F;
     static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
     static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
@@ -175,7 +177,7 @@ public class LightOverlay implements ClientModInitializer {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, shapeContext);
-        if (!blockUpperState.getFluidState().isEmpty())
+        if (!underwater && !blockUpperState.getFluidState().isEmpty())
             return CrossType.NONE;
         // Check if the outline is full
         if (Block.isFaceFullSquare(upperCollisionShape, Direction.UP))
@@ -203,13 +205,13 @@ public class LightOverlay implements ClientModInitializer {
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, shapeContext);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, shapeContext);
-        if (!blockUpperState.getFluidState().isEmpty())
+        if (!underwater && !blockUpperState.getFluidState().isEmpty())
             return -1;
         if (!blockBelowState.getFluidState().isEmpty())
             return -1;
         if (blockBelowState.isAir())
             return -1;
-        if (!blockUpperState.isAir())
+        if (Block.isFaceFullSquare(upperCollisionShape, Direction.DOWN))
             return -1;
         return view.getLightLevel(pos);
     }
@@ -270,6 +272,8 @@ public class LightOverlay implements ClientModInitializer {
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
+            smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
+            underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
             lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
             {
                 int r, g, b;
@@ -293,6 +297,9 @@ public class LightOverlay implements ClientModInitializer {
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            showNumber = false;
+            smoothLines = true;
+            underwater = false;
             try {
                 saveConfig(file);
             } catch (IOException ex) {
@@ -312,6 +319,10 @@ public class LightOverlay implements ClientModInitializer {
         fos.write(("crossLevel=" + crossLevel).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("smoothLines=" + smoothLines).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("underwater=" + underwater).getBytes());
         fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());
@@ -420,7 +431,7 @@ public class LightOverlay implements ClientModInitializer {
                     RenderSystem.disableTexture();
                     RenderSystem.enableBlend();
                     RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
-                    GL11.glEnable(GL11.GL_LINE_SMOOTH);
+                    if (smoothLines) GL11.glEnable(GL11.GL_LINE_SMOOTH);
                     RenderSystem.lineWidth(lineWidth);
                     Tessellator tessellator = Tessellator.getInstance();
                     BufferBuilder buffer = tessellator.getBuffer();
@@ -442,7 +453,7 @@ public class LightOverlay implements ClientModInitializer {
                     }
                     RenderSystem.disableBlend();
                     RenderSystem.enableTexture();
-                    GL11.glDisable(GL11.GL_LINE_SMOOTH);
+                    if (smoothLines) GL11.glDisable(GL11.GL_LINE_SMOOTH);
                 }
             }
         });
