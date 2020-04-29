@@ -86,6 +86,7 @@ public class LightOverlay implements ClientModInitializer {
                 ticks++;
                 if (MinecraftClient.getInstance().player == null || !enabled) {
                     POS.clear();
+                    CHUNK_MAP.clear();
                 } else {
                     ClientPlayerEntity player = MinecraftClient.getInstance().player;
                     ClientWorld world = MinecraftClient.getInstance().world;
@@ -251,7 +252,7 @@ public class LightOverlay implements ClientModInitializer {
         RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
         RenderSystem.scalef(-size, -size, size);
-        float float_3 = (float) (-textRenderer_1.method_27525(text)) / 2.0F + 0.4f;
+        float float_3 = (float) (-textRenderer_1.getWidth(text)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
         textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
