@@ -268,6 +268,7 @@ public class LightOverlayClient {
                 ticks++;
                 if (minecraft.player == null || !enabled) {
                     POS.clear();
+                    CHUNK_MAP.clear();
                 } else {
                     ClientPlayerEntity player = minecraft.player;
                     ClientWorld world = minecraft.world;
