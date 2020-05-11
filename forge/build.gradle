@@ -1,0 +1,48 @@
+buildscript {
+    repositories {
+        maven { url "https://files.minecraftforge.net/maven" }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath(group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "3.+", changing: true)
+    }
+}
+
+plugins {
+    id("com.wynprice.cursemaven") version("2.1.1")
+}
+
+apply plugin: "net.minecraftforge.gradle"
+apply plugin: "eclipse"
+
+minecraft {
+    mappings(channel: "snapshot", version: rootProject.mcp_snapshot)
+    runs {
+        client {
+            workingDirectory project.file("run")
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file("run")
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven { url "https://files.minecraftforge.net/maven" }
+}
+
+dependencies {
+    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-31.1.39")
+    implementation(fg.deobf("curse.maven:cloth-config-forge:${rootProject.cloth_config_forge_commit}"))
+}

@@ -1,74 +1,187 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        jcenter()
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath("commons-io:commons-io:2.6")
     }
 }
+
+import org.jetbrains.gradle.ext.ActionDelegationConfig
+
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
+import java.util.stream.Stream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 plugins {
-    id "com.wynprice.cursemaven" version "2.1.1"
+    id "org.jetbrains.gradle.plugin.idea-ext" version "0.7"
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'eclipse'
+allprojects {
+    apply plugin: "java"
 
-version = "4.6.1"
-group = "me.shedaniel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "LightOverlay"
+    group "me.shedaniel"
+    archivesBaseName = rootProject.name
+    version = rootProject.mod_version
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+    sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = JavaVersion.VERSION_1_8
+}
 
-minecraft {
-    mappings channel: 'snapshot', version: '20200408-1.15.1'
-    runs {
-        client {
-            workingDirectory project.file('run')
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
+idea.project.settings {
+    delegateActions {
+        delegateBuildRunToGradle = false
+        testRunner = ActionDelegationConfig.TestRunner.PLATFORM
+    }
+    runConfigurations {
+        "Fabric: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
+            project = rootProject.project(":fabric")
+            taskNames = Collections.singletonList("runClient")
         }
-        server {
-            workingDirectory project.file('run')
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
+        "Fabric: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
+            project = rootProject.project(":fabric")
+            taskNames = Collections.singletonList("runServer")
+        }
+        "Forge: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
+            project = rootProject.project(":forge")
+            taskNames = Collections.singletonList("runClient")
+        }
+        "Forge: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
+            project = rootProject.project(":forge")
+            taskNames = Collections.singletonList("runServer")
         }
     }
 }
 
-repositories {
-    maven { url "https://files.minecraftforge.net/maven" }
+task buildMerged {
+    doLast {
+        def folder = file(".gradle/.mergemods")
+        folder.mkdirs()
+        def fabricJar = file("fabric/build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
+        def forgeJar = file("forge/build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
+        def fabricFolder = new File(folder, ".tempFabric")
+        def forgeFolder = new File(folder, ".tempForge")
+        def mergeFolder = new File(folder, ".tempMerge")
+        def policyMap = new HashMap<String, String>()
+        file("merging.policy").eachLine {
+            if (it.isBlank() || it.startsWith("#")) return
+            def env = it.substring(0, it.indexOf(' '))
+            if (env == "FABRIC")
+                policyMap.put(it.substring(env.length() + 1), "Fabric")
+            else if (env == "FORGE")
+                policyMap.put(it.substring(env.length() + 1), "Forge")
+            else throw new IllegalStateException("Illegal env $env at $it")
+        }
+        forgeFolder.deleteDir()
+        fabricFolder.deleteDir()
+        mergeFolder.deleteDir()
+        unzip(fabricJar, fabricFolder)
+        unzip(forgeJar, forgeFolder)
+        mergeFolder.mkdirs()
+        Stream.of(forgeFolder, fabricFolder).each { useFolder ->
+            try {
+                Files.walkFileTree(useFolder.toPath(), new SimpleFileVisitor<Path>() {
+                    @Override
+                    FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        try {
+                            File ogFile = file.toFile()
+                            File outFile = new File(mergeFolder, ogFile.getAbsolutePath().replace(useFolder.getAbsolutePath(), ""))
+                            outFile.getParentFile().mkdirs()
+                            if (outFile.exists()) {
+                                def env = useFolder.getName().substring(5)
+                                def fileName = outFile.getAbsolutePath().replace(mergeFolder.getAbsolutePath(), "")
+                                def policyEnv = policyMap.get(fileName)
+                                if (policyEnv == null) {
+                                    throw new IllegalStateException("Unhandled duplicate file: $fileName")
+                                }
+                                println "Chose env ${policyEnv.toUpperCase(Locale.ROOT)} for duplicate file: $fileName"
+                                if (policyEnv != env)
+                                    return FileVisitResult.CONTINUE
+                            }
+                            if (!ogFile.isDirectory()) {
+                                org.apache.commons.io.FileUtils.copyFile(ogFile, outFile)
+                            } else {
+                                org.apache.commons.io.FileUtils.copyDirectory(ogFile, outFile)
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace()
+                            System.exit(0)
+                        }
+                        return FileVisitResult.CONTINUE
+                    }
+                })
+            } catch (IOException e) {
+                e.printStackTrace()
+                System.exit(0)
+            }
+        }
+        File finalMerge = file("build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
+        finalMerge.parentFile.mkdirs()
+        finalMerge.delete()
+        compress(mergeFolder.toPath(), finalMerge)
+        folder.deleteDir()
+    }
 }
 
-dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.2-31.1.39'
-    implementation fg.deobf("curse.maven:cloth-config-forge:2938583")
+buildMerged.mustRunAfter project(":fabric").tasks.getByName("build")
+buildMerged.mustRunAfter project(":forge").tasks.getByName("build")
+
+static def compress(Path sourceDir, File zipFile) {
+    try {
+        final ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(zipFile))
+        Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
+            @Override
+            FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                try {
+                    Path targetFile = sourceDir.relativize(file)
+                    outputStream.putNextEntry(new ZipEntry(targetFile.toString()))
+                    byte[] bytes = Files.readAllBytes(file)
+                    outputStream.write(bytes, 0, bytes.length)
+                    outputStream.closeEntry()
+                } catch (IOException e) {
+                    e.printStackTrace()
+                }
+                return FileVisitResult.CONTINUE
+            }
+        })
+        outputStream.close()
+    } catch (IOException e) {
+        e.printStackTrace()
+    }
 }
 
-jar {
-    manifest {
-        attributes(["Specification-Title"     : "examplemod",
-                    "Specification-Vendor"    : "examplemodsareus",
-                    "Specification-Version"   : "1", // We are version 1 of the modlauncher specification
-                    "Implementation-Title"    : project.name,
-                    "Implementation-Version"  : "${version}",
-                    "Implementation-Vendor"   : "examplemodsareus",
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
+static def unzip(File zipFile, File destDir) {
+    if (!destDir.exists())
+        destDir.mkdirs()
+    FileInputStream fis
+    byte[] buffer = new byte[1024]
+    try {
+        fis = new FileInputStream(zipFile)
+        ZipInputStream zis = new ZipInputStream(fis)
+        ZipEntry zipEntry = zis.getNextEntry()
+        while (zipEntry != null) {
+            if (!zipEntry.isDirectory()) {
+                File newFile = new File(destDir, zipEntry.getName())
+                new File(newFile.getParent()).mkdirs()
+                FileOutputStream fos = new FileOutputStream(newFile)
+                int len
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len)
+                }
+                fos.close()
+            }
+            zis.closeEntry()
+            zipEntry = zis.getNextEntry()
+        }
+        zis.closeEntry()
+        zis.close()
+        fis.close()
+    } catch (IOException e) {
+        e.printStackTrace()
     }
 }

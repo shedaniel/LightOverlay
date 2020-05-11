@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "me.shedaniel.lightoverlay.fabric.mixin",
+  "minVersion": "0.7.11",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [
+    "MixinClientConnection"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

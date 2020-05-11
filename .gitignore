@@ -1,9 +1,11 @@
 # Compiled nonsense that does not belong in *source* control
+*/build
 /build
 /bin
 /.gradle
 /minecraft
 /out
+*/run
 /run
 /classes
 

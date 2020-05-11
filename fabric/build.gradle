@@ -1,0 +1,39 @@
+plugins {
+    id("fabric-loom") version "0.4.3"
+}
+
+minecraft {
+    accessWidener = file("src/main/resources/lightoverlay.accesswidener")
+}
+
+processResources {
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+    inputs.property "version", project.version
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.fabric_minecraft_version}"
+    mappings "net.fabricmc:yarn:${rootProject.fabric_minecraft_version}+build.${rootProject.yarn_build}:v2"
+    modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+
+    modCompile "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    modCompile("me.shedaniel.cloth:cloth-events:${rootProject.cloth_events_version}") {
+        transitive = false
+    }
+    modImplementation("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}")
+    modImplementation("io.github.prospector:modmenu:${rootProject.modmenu_version}") {
+        transitive = false
+    }
+    include("me.shedaniel.cloth:cloth-events:${rootProject.cloth_events_version}") {
+        transitive = false
+    }
+    include("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}") {
+        transitive = false
+    }
+}
