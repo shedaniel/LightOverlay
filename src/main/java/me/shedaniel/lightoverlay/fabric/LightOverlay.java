@@ -21,8 +21,8 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.text.LiteralText;
@@ -162,7 +162,7 @@ public class LightOverlay implements ClientModInitializer {
                     }
                 } else {
                     Biome biome = world.getBiomeAccess().getBiome(pos);
-                    if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
+                    if (biome.getMaxSpawnChance() > 0 && !biome.getEntitySpawnList(SpawnGroup.MONSTER).isEmpty()) {
                         CrossType type = LightOverlay.getCrossType(pos, down, chunk, block, sky, shapeContext);
                         if (type != CrossType.NONE) {
                             map.put(pos.asLong(), type);
@@ -347,7 +347,7 @@ public class LightOverlay implements ClientModInitializer {
         loadConfig(configFile);
         
         // Setup
-        testingEntityType = EntityType.Builder.create(EntityCategory.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
+        testingEntityType = EntityType.Builder.create(SpawnGroup.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
         MinecraftClient client = MinecraftClient.getInstance();
         KeyBindingRegistry.INSTANCE.addCategory(KEYBIND_CATEGORY);
         KeyBindingRegistry.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
