@@ -21,8 +21,8 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.text.LiteralText;
@@ -47,8 +47,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class LightOverlay implements ClientModInitializer {
     
@@ -71,25 +71,26 @@ public class LightOverlay implements ClientModInitializer {
     private static boolean enabled = false;
     private static EntityType<Entity> testingEntityType;
     private static int threadNumber = 0;
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
+    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
         Thread thread = new Thread(r, "light-overlay-" + threadNumber++);
         thread.setDaemon(true);
         return thread;
     });
     private static final List<ChunkPos> POS = Lists.newCopyOnWriteArrayList();
     private static final Map<ChunkPos, Map<Long, Object>> CHUNK_MAP = Maps.newConcurrentMap();
+    private static final MinecraftClient CLIENT = MinecraftClient.getInstance();
     private static long ticks = 0;
     
     static {
         ClientTickCallback.EVENT.register(client -> {
             try {
                 ticks++;
-                if (MinecraftClient.getInstance().player == null || !enabled) {
+                if (CLIENT.player == null || !enabled) {
                     POS.clear();
                     CHUNK_MAP.clear();
                 } else {
-                    ClientPlayerEntity player = MinecraftClient.getInstance().player;
-                    ClientWorld world = MinecraftClient.getInstance().world;
+                    ClientPlayerEntity player = CLIENT.player;
+                    ClientWorld world = CLIENT.world;
                     ShapeContext shapeContext = ShapeContext.of(player);
                     Vec3d[] playerPos = {null};
                     int playerPosX = ((int) player.getX()) >> 4;
@@ -108,6 +109,7 @@ public class LightOverlay implements ClientModInitializer {
                             playerPos[0] = player.getPos();
                         }
                         ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> value.toBlockPos(8, 0, 8).getSquaredDistance(playerPos[0].x, 0, playerPos[0].z, false))).get();
+                        POS.remove(pos);
                         EXECUTOR.submit(() -> {
                             if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
                                 calculateChunk(world.getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, shapeContext);
@@ -115,7 +117,6 @@ public class LightOverlay implements ClientModInitializer {
                                 CHUNK_MAP.remove(pos);
                             }
                         });
-                        POS.remove(pos);
                     }
                     Iterator<Map.Entry<ChunkPos, Map<Long, Object>>> chunkMapIterator = CHUNK_MAP.entrySet().iterator();
                     while (chunkMapIterator.hasNext()) {
@@ -162,7 +163,7 @@ public class LightOverlay implements ClientModInitializer {
                     }
                 } else {
                     Biome biome = world.getBiomeAccess().getBiome(pos);
-                    if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
+                    if (biome.getMaxSpawnChance() > 0 && !biome.getEntitySpawnList(SpawnGroup.MONSTER).isEmpty()) {
                         CrossType type = LightOverlay.getCrossType(pos, down, chunk, block, sky, shapeContext);
                         if (type != CrossType.NONE) {
                             map.put(pos.asLong(), type);
@@ -347,8 +348,7 @@ public class LightOverlay implements ClientModInitializer {
         loadConfig(configFile);
         
         // Setup
-        testingEntityType = EntityType.Builder.create(EntityCategory.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
-        MinecraftClient client = MinecraftClient.getInstance();
+        testingEntityType = EntityType.Builder.create(SpawnGroup.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
         KeyBindingRegistry.INSTANCE.addCategory(KEYBIND_CATEGORY);
         KeyBindingRegistry.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
         KeyBindingRegistry.INSTANCE.register(increaseReach = FabricKeyBinding.Builder.create(INCREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
@@ -366,7 +366,7 @@ public class LightOverlay implements ClientModInitializer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                client.player.sendMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
+                CLIENT.player.sendMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
             }
             while (decreaseReach.wasPressed()) {
                 if (reach > 1)
@@ -376,7 +376,7 @@ public class LightOverlay implements ClientModInitializer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                client.player.sendMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
+                CLIENT.player.sendMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
             }
             while (increaseLineWidth.wasPressed()) {
                 if (lineWidth < 7)
@@ -386,7 +386,7 @@ public class LightOverlay implements ClientModInitializer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                client.player.sendMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
+                CLIENT.player.sendMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
             }
             while (decreaseLineWidth.wasPressed()) {
                 if (lineWidth > 1)
@@ -396,18 +396,18 @@ public class LightOverlay implements ClientModInitializer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                client.player.sendMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
+                CLIENT.player.sendMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
             }
         });
         ClothClientHooks.DEBUG_RENDER_PRE.register(() -> {
             if (LightOverlay.enabled) {
-                PlayerEntity playerEntity = client.player;
+                PlayerEntity playerEntity = CLIENT.player;
                 int playerPosX = ((int) playerEntity.getX()) >> 4;
                 int playerPosZ = ((int) playerEntity.getZ()) >> 4;
                 ShapeContext shapeContext = ShapeContext.of(playerEntity);
-                World world = client.world;
+                World world = CLIENT.world;
                 BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
-                Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
+                Camera camera = CLIENT.gameRenderer.getCamera();
                 if (showNumber) {
                     RenderSystem.enableTexture();
                     RenderSystem.depthMask(true);
@@ -421,7 +421,7 @@ public class LightOverlay implements ClientModInitializer {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getKey()), BlockPos.unpackLongY(objectEntry.getKey()), BlockPos.unpackLongZ(objectEntry.getKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
                                     BlockPos down = mutable.down();
-                                    LightOverlay.renderLevel(client, camera, world, mutable, down, (Integer) objectEntry.getValue(), shapeContext);
+                                    LightOverlay.renderLevel(CLIENT, camera, world, mutable, down, (Integer) objectEntry.getValue(), shapeContext);
                                 }
                             }
                         }
@@ -465,5 +465,4 @@ public class LightOverlay implements ClientModInitializer {
         RED,
         NONE
     }
-    
 }
