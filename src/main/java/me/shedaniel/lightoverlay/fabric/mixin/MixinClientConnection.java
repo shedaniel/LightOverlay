@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientConnection.class)
 public class MixinClientConnection {
     @Inject(method = "handlePacket", at = @At("HEAD"))
-    private static void handlePacket(Packet packet, PacketListener listener, CallbackInfo ci) {
+    private static void handlePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
         if (packet instanceof BlockUpdateS2CPacket) {
             LightOverlay.queueChunkAndNear(new ChunkPos(((BlockUpdateS2CPacket) packet).getPos()));
         } else if (packet instanceof ChunkDataS2CPacket) {
