@@ -17,6 +17,6 @@
   "config.lightoverlay.lineWidth": "Line Width:",
   "config.lightoverlay.yellowColor": "Yellow Color:",
   "config.lightoverlay.redColor": "Red Color:",
-  "config.lightoverlay.secondaryColor": "Secondary Color:",
+  "config.lightoverlay.optimalPlacementColor": "Optimal Placement Color:",
   "config.lightoverlay.invalidColor": "Invalid Color"
 }
