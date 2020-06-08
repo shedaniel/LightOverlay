@@ -35,7 +35,7 @@ public class LOModMenuEntry implements ModMenuApi {
         general.addEntry(eb.startIntSlider(new TranslatableText("config.lightoverlay.lineWidth"), MathHelper.floor(LightOverlay.lineWidth * 100), 100, 700).setDefaultValue(100).setTextGetter(integer -> new LiteralText("Light Width: " + LightOverlay.FORMAT.format(integer / 100d))).setSaveConsumer(integer -> LightOverlay.lineWidth = integer / 100f).build());
         general.addEntry(eb.startColorField(new TranslatableText("config.lightoverlay.yellowColor"), LightOverlay.yellowColor).setDefaultValue(0xFFFF00).setSaveConsumer(color -> LightOverlay.yellowColor = color).build());
         general.addEntry(eb.startColorField(new TranslatableText("config.lightoverlay.redColor"), LightOverlay.redColor).setDefaultValue(0xFF0000).setSaveConsumer(color -> LightOverlay.redColor = color).build());
-        general.addEntry(eb.startColorField(new TranslatableText("config.lightoverlay.secondaryColor"), LightOverlay.secondaryColor).setDefaultValue(0x0000FF).setSaveConsumer(color -> LightOverlay.secondaryColor = color).build());
+        general.addEntry(eb.startColorField(new TranslatableText("config.lightoverlay.optimalPlacementColor"), LightOverlay.optimalPlacementColor).setDefaultValue(0x0000FF).setSaveConsumer(color -> LightOverlay.optimalPlacementColor = color).build());
         
         return builder.setSavingRunnable(() -> {
             try {

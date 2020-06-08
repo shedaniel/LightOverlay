@@ -277,7 +277,7 @@ public class LightOverlay implements ClientModInitializer {
         try {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
-            secondaryColor = 0x0000FF;
+            optimalPlacementColor = 0x0000FF;
             if (!file.exists() || !file.canRead())
                 saveConfig(file);
             FileInputStream fis = new FileInputStream(file);
@@ -310,7 +310,7 @@ public class LightOverlay implements ClientModInitializer {
                 r = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorRed", a -> "0"));
                 g = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorGreen", a -> "0"));
                 b = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorBlue", a -> "255"));
-                secondaryColor = (r << 16) + (g << 8) + b;
+                optimalPlacementColor = (r << 16) + (g << 8) + b;
             }
             saveConfig(file);
         } catch (Exception e) {
@@ -321,7 +321,7 @@ public class LightOverlay implements ClientModInitializer {
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
-            secondaryColor = 0x0000FF;
+            optimalPlacementColor = 0x0000FF;
             showNumber = false;
             smoothLines = true;
             underwater = false;
@@ -365,11 +365,11 @@ public class LightOverlay implements ClientModInitializer {
         fos.write("\n".getBytes());
         fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("secondaryColorRed=" + ((secondaryColor >> 16) & 255)).getBytes());
+        fos.write(("secondaryColorRed=" + ((optimalPlacementColor >> 16) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("secondaryColorGreen=" + ((secondaryColor >> 8) & 255)).getBytes());
+        fos.write(("secondaryColorGreen=" + ((optimalPlacementColor >> 8) & 255)).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("secondaryColorBlue=" + (secondaryColor & 255)).getBytes());
+        fos.write(("secondaryColorBlue=" + (optimalPlacementColor & 255)).getBytes());
         fos.close();
     }
     
@@ -477,7 +477,7 @@ public class LightOverlay implements ClientModInitializer {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getKey()), BlockPos.unpackLongY(objectEntry.getKey()), BlockPos.unpackLongZ(objectEntry.getKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
                                     BlockPos down = mutable.down();
-                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : secondaryColor;
+                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : optimalPlacementColor;
                                     LightOverlay.renderCross(tessellator, buffer, camera, world, mutable, color, shapeContext);
                                 }
                             }
