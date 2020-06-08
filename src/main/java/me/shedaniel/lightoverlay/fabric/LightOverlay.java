@@ -66,7 +66,7 @@ public class LightOverlay implements ClientModInitializer {
     static boolean smoothLines = true;
     static boolean underwater = false;
     static float lineWidth = 1.0F;
-    static int yellowColor = 0xFFFF00, redColor = 0xFF0000, secondaryColor = 0x0000FF;
+    static int yellowColor = 0xFFFF00, redColor = 0xFF0000, optimalPlacementColor = 0x0000FF;
     static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
     private static FabricKeyBinding enableOverlay, increaseReach, decreaseReach, increaseLineWidth, decreaseLineWidth;
     private static boolean enabled = false;
