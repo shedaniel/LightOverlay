@@ -61,7 +61,7 @@ public class LightOverlay implements ClientModInitializer {
     private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
     static int reach = 12;
     static int crossLevel = 7;
-    static int crossLevel2 = 1;
+    static int optimalPlacementLevel = 1;
     static boolean showNumber = false;
     static boolean smoothLines = true;
     static boolean underwater = false;
@@ -197,18 +197,18 @@ public class LightOverlay implements ClientModInitializer {
         if (!blockBelowState.allowsSpawning(world, down, testingEntityType))
             return CrossType.NONE;
         // We want to return the "heighest" color
-        if (crossLevel > crossLevel2) {
+        if (crossLevel > optimalPlacementLevel) {
             if (block.getLightLevel(pos) > crossLevel)
                 return CrossType.NONE;
             if (sky.getLightLevel(pos) > crossLevel)
                 return CrossType.YELLOW;
-            return block.getLightLevel(pos) > crossLevel2 ? CrossType.RED : CrossType.SECONDARY;
+            return block.getLightLevel(pos) > optimalPlacementLevel ? CrossType.RED : CrossType.PLACEMENT;
         }
-        if (block.getLightLevel(pos) > crossLevel2)
+        if (block.getLightLevel(pos) > optimalPlacementLevel)
             return CrossType.NONE;
-        if (sky.getLightLevel(pos) > crossLevel2)
+        if (sky.getLightLevel(pos) > optimalPlacementLevel)
             return CrossType.YELLOW;
-        return block.getLightLevel(pos) > crossLevel ? CrossType.SECONDARY : CrossType.RED;
+        return block.getLightLevel(pos) > crossLevel ? CrossType.PLACEMENT : CrossType.RED;
     }
 
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockView world, ChunkLightingView view, ShapeContext shapeContext) {
@@ -265,10 +265,10 @@ public class LightOverlay implements ClientModInitializer {
         float float_3 = (float) (-textRenderer_1.getWidth(text)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        if (crossLevel > crossLevel2)
-            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : (level > crossLevel2 ? 0xff731111 : 0xff0066ff), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+        if (crossLevel > optimalPlacementLevel)
+            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : (level > optimalPlacementLevel ? 0xff731111 : 0xff0066ff), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
         else
-            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel2 ? 0xff042404 : (level > crossLevel ? 0xff0066ff : 0xff731111), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+            textRenderer_1.draw(text, float_3, -3.5f, level > optimalPlacementLevel ? 0xff042404 : (level > crossLevel ? 0xff0066ff : 0xff731111), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
         immediate.draw();
         RenderSystem.popMatrix();
     }
@@ -286,7 +286,7 @@ public class LightOverlay implements ClientModInitializer {
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
-            crossLevel2 = Integer.parseInt((String) properties.computeIfAbsent("crossLevel2", a -> "1"));
+            optimalPlacementLevel = Integer.parseInt((String) properties.computeIfAbsent("optimalPlacementLevel", a -> "1"));
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
@@ -317,7 +317,7 @@ public class LightOverlay implements ClientModInitializer {
             e.printStackTrace();
             reach = 12;
             crossLevel = 7;
-            crossLevel2 = 1;
+            optimalPlacementLevel = 1;
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
@@ -343,7 +343,7 @@ public class LightOverlay implements ClientModInitializer {
         fos.write("\n".getBytes());
         fos.write(("crossLevel=" + crossLevel).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("crossLevel2=" + crossLevel2).getBytes());
+        fos.write(("optimalPlacementLevel=" + optimalPlacementLevel).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
@@ -494,7 +494,7 @@ public class LightOverlay implements ClientModInitializer {
     private enum CrossType {
         YELLOW,
         RED,
-        SECONDARY,
+        PLACEMENT,
         NONE
     }
 }
