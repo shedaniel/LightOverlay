@@ -10,7 +10,7 @@
   "config.lightoverlay.general": "General",
   "config.lightoverlay.reach": "Reach:",
   "config.lightoverlay.crossLevel": "Light Level:",
-  "config.lightoverlay.optimalPlacementLevel": "Optimal Placement Level:",
+  "config.lightoverlay.optimalPlacementLevel": "Hint Light Level:",
   "config.lightoverlay.showNumber": "Show Number Instead:",
   "config.lightoverlay.smoothLines": "Smooth Lines:",
   "config.lightoverlay.underwater": "Display Underwater:",

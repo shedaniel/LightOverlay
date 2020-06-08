@@ -61,7 +61,7 @@ public class LightOverlay implements ClientModInitializer {
     private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
     static int reach = 12;
     static int crossLevel = 7;
-    static int optimalPlacementLevel = 1;
+    static int optimalPlacementLevel = -1;
     static boolean showNumber = false;
     static boolean smoothLines = true;
     static boolean underwater = false;
@@ -286,7 +286,7 @@ public class LightOverlay implements ClientModInitializer {
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
-            optimalPlacementLevel = Integer.parseInt((String) properties.computeIfAbsent("optimalPlacementLevel", a -> "1"));
+            optimalPlacementLevel = Integer.parseInt((String) properties.computeIfAbsent("optimalPlacementLevel", a -> "-1"));
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
@@ -317,7 +317,7 @@ public class LightOverlay implements ClientModInitializer {
             e.printStackTrace();
             reach = 12;
             crossLevel = 7;
-            optimalPlacementLevel = 1;
+            optimalPlacementLevel = -1;
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
