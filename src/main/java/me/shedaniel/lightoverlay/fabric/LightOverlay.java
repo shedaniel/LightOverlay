@@ -189,7 +189,7 @@ public class LightOverlay implements ClientModInitializer {
         if (blockUpperState.emitsRedstonePower())
             return CrossType.NONE;
         // Check if the collision has a bump
-        if (upperCollisionShape.getMaximum(Direction.Axis.Y) > 0)
+        if (upperCollisionShape.getMax(Direction.Axis.Y) > 0)
             return CrossType.NONE;
         if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
             return CrossType.NONE;
@@ -207,10 +207,10 @@ public class LightOverlay implements ClientModInitializer {
         if (block.getLightLevel(pos) > crossLevel2)
             return CrossType.NONE;
         if (sky.getLightLevel(pos) > crossLevel2)
-            return sky.getLightLevel(pos) > crossLevel ? CrossType.YELLOW : CrossType.SECONDARY;
-        return block.getLightLevel(pos) > crossLevel ? CrossType.RED : CrossType.SECONDARY;
+            return sky.getLightLevel(pos) > crossLevel ? CrossType.SECONDARY : CrossType.YELLOW;
+        return block.getLightLevel(pos) > crossLevel ? CrossType.SECONDARY : CrossType.RED;
     }
-    
+
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockView world, ChunkLightingView view, ShapeContext shapeContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
@@ -226,15 +226,15 @@ public class LightOverlay implements ClientModInitializer {
             return -1;
         return view.getLightLevel(pos);
     }
-    
+
     public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, ShapeContext shapeContext) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
         VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, shapeContext);
         if (!upperOutlineShape.isEmpty())
-            d1 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
+            d1 -= upperOutlineShape.getMax(Direction.Axis.Y);
         double d2 = camera.getPos().z;
-        
+
         buffer.begin(1, VertexFormats.POSITION_COLOR);
         int red = (color >> 16) & 255;
         int green = (color >> 8) & 255;
@@ -245,7 +245,7 @@ public class LightOverlay implements ClientModInitializer {
         buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
         tessellator.draw();
     }
-    
+
     @SuppressWarnings("deprecation")
     public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, ShapeContext shapeContext) {
         Text text = new LiteralText(String.valueOf(level));
@@ -254,7 +254,7 @@ public class LightOverlay implements ClientModInitializer {
         double double_5 = camera.getPos().y;
         VoxelShape upperOutlineShape = world.getBlockState(down).getOutlineShape(world, down, shapeContext);
         if (!upperOutlineShape.isEmpty())
-            double_5 += 1 - upperOutlineShape.getMaximum(Direction.Axis.Y);
+            double_5 += 1 - upperOutlineShape.getMax(Direction.Axis.Y);
         double double_6 = camera.getPos().z;
         RenderSystem.pushMatrix();
         RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
@@ -266,9 +266,9 @@ public class LightOverlay implements ClientModInitializer {
         RenderSystem.enableAlphaTest();
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
         if (crossLevel > crossLevel2)
-            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? (level > crossLevel2 ? 0xff042404 : 0x0066ff) : 0xff731111, false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : (level > crossLevel2 ? 0xff731111 : 0xff0066ff), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
         else
-            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? (level > crossLevel2 ? 0xff042404 : 0x0066ff) : 0xff731111, false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel2 ? 0xff042404 : (level > crossLevel ? 0xff0066ff : 0xff731111), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
         immediate.draw();
         RenderSystem.popMatrix();
     }
