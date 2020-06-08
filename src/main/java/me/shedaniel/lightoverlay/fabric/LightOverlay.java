@@ -201,7 +201,7 @@ public class LightOverlay implements ClientModInitializer {
             if (block.getLightLevel(pos) > crossLevel)
                 return CrossType.NONE;
             if (sky.getLightLevel(pos) > crossLevel)
-                return CrossType.SECONDARY;
+                return CrossType.YELLOW;
             return block.getLightLevel(pos) > crossLevel2 ? CrossType.RED : CrossType.SECONDARY;
         }
         if (block.getLightLevel(pos) > crossLevel2)
