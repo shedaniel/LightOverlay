@@ -61,11 +61,12 @@ public class LightOverlay implements ClientModInitializer {
     private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
     static int reach = 12;
     static int crossLevel = 7;
+    static int optimalPlacementLevel = -1;
     static boolean showNumber = false;
     static boolean smoothLines = true;
     static boolean underwater = false;
     static float lineWidth = 1.0F;
-    static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
+    static int yellowColor = 0xFFFF00, redColor = 0xFF0000, optimalPlacementColor = 0x0000FF;
     static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
     private static FabricKeyBinding enableOverlay, increaseReach, decreaseReach, increaseLineWidth, decreaseLineWidth;
     private static boolean enabled = false;
@@ -188,20 +189,28 @@ public class LightOverlay implements ClientModInitializer {
         if (blockUpperState.emitsRedstonePower())
             return CrossType.NONE;
         // Check if the collision has a bump
-        if (upperCollisionShape.getMaximum(Direction.Axis.Y) > 0)
+        if (upperCollisionShape.getMax(Direction.Axis.Y) > 0)
             return CrossType.NONE;
         if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.allowsSpawning(world, down, testingEntityType))
             return CrossType.NONE;
-        if (block.getLightLevel(pos) > crossLevel)
+        // We want to return the "heighest" color
+        if (crossLevel > optimalPlacementLevel) {
+            if (block.getLightLevel(pos) > crossLevel)
+                return CrossType.NONE;
+            if (sky.getLightLevel(pos) > crossLevel)
+                return CrossType.YELLOW;
+            return block.getLightLevel(pos) > optimalPlacementLevel ? CrossType.RED : CrossType.PLACEMENT;
+        }
+        if (block.getLightLevel(pos) > optimalPlacementLevel)
             return CrossType.NONE;
-        if (sky.getLightLevel(pos) > crossLevel)
+        if (sky.getLightLevel(pos) > optimalPlacementLevel)
             return CrossType.YELLOW;
-        return CrossType.RED;
+        return block.getLightLevel(pos) > crossLevel ? CrossType.PLACEMENT : CrossType.RED;
     }
-    
+
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockView world, ChunkLightingView view, ShapeContext shapeContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
@@ -217,15 +226,15 @@ public class LightOverlay implements ClientModInitializer {
             return -1;
         return view.getLightLevel(pos);
     }
-    
+
     public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, ShapeContext shapeContext) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
         VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, shapeContext);
         if (!upperOutlineShape.isEmpty())
-            d1 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
+            d1 -= upperOutlineShape.getMax(Direction.Axis.Y);
         double d2 = camera.getPos().z;
-        
+
         buffer.begin(1, VertexFormats.POSITION_COLOR);
         int red = (color >> 16) & 255;
         int green = (color >> 8) & 255;
@@ -236,7 +245,7 @@ public class LightOverlay implements ClientModInitializer {
         buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
         tessellator.draw();
     }
-    
+
     @SuppressWarnings("deprecation")
     public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, ShapeContext shapeContext) {
         Text text = new LiteralText(String.valueOf(level));
@@ -245,7 +254,7 @@ public class LightOverlay implements ClientModInitializer {
         double double_5 = camera.getPos().y;
         VoxelShape upperOutlineShape = world.getBlockState(down).getOutlineShape(world, down, shapeContext);
         if (!upperOutlineShape.isEmpty())
-            double_5 += 1 - upperOutlineShape.getMaximum(Direction.Axis.Y);
+            double_5 += 1 - upperOutlineShape.getMax(Direction.Axis.Y);
         double double_6 = camera.getPos().z;
         RenderSystem.pushMatrix();
         RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
@@ -256,7 +265,10 @@ public class LightOverlay implements ClientModInitializer {
         float float_3 = (float) (-textRenderer_1.getWidth(text)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+        if (crossLevel > optimalPlacementLevel)
+            textRenderer_1.draw(text, float_3, -3.5f, level > crossLevel ? 0xff042404 : (level > optimalPlacementLevel ? 0xff731111 : 0xff0066ff), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
+        else
+            textRenderer_1.draw(text, float_3, -3.5f, level > optimalPlacementLevel ? 0xff042404 : (level > crossLevel ? 0xff0066ff : 0xff731111), false, AffineTransformation.identity().getMatrix(), immediate, false, 0, 15728880);
         immediate.draw();
         RenderSystem.popMatrix();
     }
@@ -265,6 +277,7 @@ public class LightOverlay implements ClientModInitializer {
         try {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            optimalPlacementColor = 0x0000FF;
             if (!file.exists() || !file.canRead())
                 saveConfig(file);
             FileInputStream fis = new FileInputStream(file);
@@ -273,6 +286,7 @@ public class LightOverlay implements ClientModInitializer {
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
+            optimalPlacementLevel = Integer.parseInt((String) properties.computeIfAbsent("optimalPlacementLevel", a -> "-1"));
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
@@ -291,14 +305,23 @@ public class LightOverlay implements ClientModInitializer {
                 b = Integer.parseInt((String) properties.computeIfAbsent("redColorBlue", a -> "0"));
                 redColor = (r << 16) + (g << 8) + b;
             }
+            {
+                int r, g, b;
+                r = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorRed", a -> "0"));
+                g = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorGreen", a -> "0"));
+                b = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorBlue", a -> "255"));
+                optimalPlacementColor = (r << 16) + (g << 8) + b;
+            }
             saveConfig(file);
         } catch (Exception e) {
             e.printStackTrace();
             reach = 12;
             crossLevel = 7;
+            optimalPlacementLevel = -1;
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            optimalPlacementColor = 0x0000FF;
             showNumber = false;
             smoothLines = true;
             underwater = false;
@@ -320,6 +343,8 @@ public class LightOverlay implements ClientModInitializer {
         fos.write("\n".getBytes());
         fos.write(("crossLevel=" + crossLevel).getBytes());
         fos.write("\n".getBytes());
+        fos.write(("optimalPlacementLevel=" + optimalPlacementLevel).getBytes());
+        fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
         fos.write(("smoothLines=" + smoothLines).getBytes());
@@ -339,6 +364,12 @@ public class LightOverlay implements ClientModInitializer {
         fos.write(("redColorGreen=" + ((redColor >> 8) & 255)).getBytes());
         fos.write("\n".getBytes());
         fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorRed=" + ((optimalPlacementColor >> 16) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorGreen=" + ((optimalPlacementColor >> 8) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorBlue=" + (optimalPlacementColor & 255)).getBytes());
         fos.close();
     }
     
@@ -446,7 +477,7 @@ public class LightOverlay implements ClientModInitializer {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getKey()), BlockPos.unpackLongY(objectEntry.getKey()), BlockPos.unpackLongZ(objectEntry.getKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
                                     BlockPos down = mutable.down();
-                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : yellowColor;
+                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : optimalPlacementColor;
                                     LightOverlay.renderCross(tessellator, buffer, camera, world, mutable, color, shapeContext);
                                 }
                             }
@@ -463,6 +494,7 @@ public class LightOverlay implements ClientModInitializer {
     private enum CrossType {
         YELLOW,
         RED,
+        PLACEMENT,
         NONE
     }
 }
