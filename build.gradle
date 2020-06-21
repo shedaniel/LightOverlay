@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.4.15'
+    id 'fabric-loom' version '0.4-SNAPSHOT'
 }
 
 sourceCompatibility = 1.8
@@ -20,24 +20,25 @@ processResources {
 }
 
 repositories {
-    jcenter()
+    jcenter()  
+    maven { url "https://dl.bintray.com/shedaniel/legacy-yarn-updated" }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraftVersion}"
-    mappings "net.fabricmc:yarn:${yarnVersion}:v2"
+    mappings "me.shedaniel:legacy-yarn:${yarnVersion}:v2"
     modCompile "net.fabricmc:fabric-loader:${loaderVersion}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modCompile "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
-    modCompile("me.shedaniel.cloth:cloth-events:${cloth_version}") {
+    modCompile("me.shedaniel.cloth.api:cloth-client-events-v0:${cloth_version}") {
         transitive = false
     }
     modImplementation("me.shedaniel.cloth:config-2:${cloth_config_version}")
     modImplementation("io.github.prospector:modmenu:${modmenuVersion}") {
         transitive = false
     }
-    include("me.shedaniel.cloth:cloth-events:${cloth_version}") {
+    include("me.shedaniel.cloth.api:cloth-client-events-v0:${cloth_version}") {
         transitive = false
     }
     include("me.shedaniel.cloth:config-2:${cloth_config_version}") {

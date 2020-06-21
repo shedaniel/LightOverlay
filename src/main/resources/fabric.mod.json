@@ -25,7 +25,7 @@
   "icon": "icon.png",
   "depends": {
     "fabricloader": ">=0.8.4",
-    "cloth": "~2.2-",
+    "cloth-client-events-v0": "*",
     "minecraft": "~1.16-Snapshot.20.21.a"
   },
   "mixins": [
