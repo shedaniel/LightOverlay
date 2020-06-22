@@ -7,6 +7,7 @@ import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.s2c.play.BlockUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.network.packet.s2c.play.ChunkDeltaUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.LightUpdateS2CPacket;
 import net.minecraft.util.math.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,6 +24,8 @@ public class MixinClientConnection {
             LightOverlay.queueChunkAndNear(new ChunkPos(((ChunkDataS2CPacket) packet).getX(), ((ChunkDataS2CPacket) packet).getZ()));
         } else if (packet instanceof ChunkDeltaUpdateS2CPacket) {
             LightOverlay.queueChunkAndNear(new ChunkPos(((ChunkDeltaUpdateS2CPacket) packet).chunkPos.x, ((ChunkDeltaUpdateS2CPacket) packet).chunkPos.z));
+        } else if (packet instanceof LightUpdateS2CPacket) {
+            LightOverlay.queueChunk(new ChunkPos(((LightUpdateS2CPacket) packet).getChunkX(), ((LightUpdateS2CPacket) packet).getChunkZ()));
         }
     }
 }

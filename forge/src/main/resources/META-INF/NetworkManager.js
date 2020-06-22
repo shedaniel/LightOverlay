@@ -23,7 +23,7 @@ function initializeCoreMod() {
                             if (instruction instanceof LabelNode) {
                                 instructions.insertBefore(instruction, new LabelNode());
                                 instructions.insertBefore(instruction, new VarInsnNode(Opcodes.ALOAD, 0));
-                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/lightoverlay/LightOverlay", "processPacket", "(Lnet/minecraft/network/IPacket;)V", false));
+                                instructions.insertBefore(instruction, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/lightoverlay/forge/LightOverlay", "processPacket", "(Lnet/minecraft/network/IPacket;)V", false));
                                 break;
                             }
                         }

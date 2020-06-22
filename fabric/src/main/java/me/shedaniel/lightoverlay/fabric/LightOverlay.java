@@ -6,8 +6,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.cloth.hooks.ClothClientHooks;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.keybinding.FabricKeyBinding;
-import net.fabricmc.fabric.api.client.keybinding.KeyBindingRegistry;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.event.client.ClientTickCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
@@ -15,7 +14,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
+import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.Rotation3;
 import net.minecraft.client.world.ClientWorld;
@@ -25,7 +27,6 @@ import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
 import net.minecraft.util.shape.VoxelShape;
@@ -45,80 +46,114 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class LightOverlay implements ClientModInitializer {
+    
     static final DecimalFormat FORMAT = new DecimalFormat("#.#");
     private static final String KEYBIND_CATEGORY = "key.lightoverlay.category";
     private static final Identifier ENABLE_OVERLAY_KEYBIND = new Identifier("lightoverlay", "enable_overlay");
-    private static final Identifier INCREASE_REACH_KEYBIND = new Identifier("lightoverlay", "increase_reach");
-    private static final Identifier DECREASE_REACH_KEYBIND = new Identifier("lightoverlay", "decrease_reach");
-    private static final Identifier INCREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "increase_line_width");
-    private static final Identifier DECREASE_LINE_WIDTH_KEYBIND = new Identifier("lightoverlay", "decrease_line_width");
     static int reach = 12;
     static int crossLevel = 7;
+    static int secondaryLevel = -1;
+    static int lowerCrossLevel = -1;
+    static int higherCrossLevel = -1;
+    static boolean caching = false;
     static boolean showNumber = false;
     static boolean smoothLines = true;
     static boolean underwater = false;
     static float lineWidth = 1.0F;
-    static int yellowColor = 0xFFFF00, redColor = 0xFF0000;
+    static int yellowColor = 0xFFFF00, redColor = 0xFF0000, secondaryColor = 0x0000FF;
     static File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "lightoverlay.properties");
-    private static FabricKeyBinding enableOverlay, increaseReach, decreaseReach, increaseLineWidth, decreaseLineWidth;
+    private static final KeyBinding ENABLE_OVERLAY = createKeyBinding(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY);
     private static boolean enabled = false;
     private static EntityType<Entity> testingEntityType;
     private static int threadNumber = 0;
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
+    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
         Thread thread = new Thread(r, "light-overlay-" + threadNumber++);
         thread.setDaemon(true);
         return thread;
     });
     private static final List<ChunkPos> POS = Lists.newCopyOnWriteArrayList();
     private static final Map<ChunkPos, Map<Long, Object>> CHUNK_MAP = Maps.newConcurrentMap();
+    private static final MinecraftClient CLIENT = MinecraftClient.getInstance();
     private static long ticks = 0;
     
     static {
         ClientTickCallback.EVENT.register(client -> {
             try {
                 ticks++;
-                if (MinecraftClient.getInstance().player == null || !enabled) {
+                if (CLIENT.player == null || !enabled) {
                     POS.clear();
                     CHUNK_MAP.clear();
                 } else {
-                    ClientPlayerEntity player = MinecraftClient.getInstance().player;
-                    ClientWorld world = MinecraftClient.getInstance().world;
-                    EntityContext entityContext = EntityContext.of(player);
-                    Vec3d[] playerPos = {null};
-                    int playerPosX = ((int) player.getX()) >> 4;
-                    int playerPosZ = ((int) player.getZ()) >> 4;
-                    if (ticks % 20 == 0) {
-                        for (int chunkX = playerPosX - getChunkRange(); chunkX <= playerPosX + getChunkRange(); chunkX++) {
-                            for (int chunkZ = playerPosZ - getChunkRange(); chunkZ <= playerPosZ + getChunkRange(); chunkZ++) {
-                                ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-                                if (!CHUNK_MAP.containsKey(chunkPos))
-                                    queueChunk(chunkPos);
-                            }
-                        }
-                    }
-                    if (!POS.isEmpty()) {
-                        if (playerPos[0] == null) {
-                            playerPos[0] = player.getPos();
-                        }
-                        ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> value.toBlockPos(8, 0, 8).getSquaredDistance(playerPos[0].x, 0, playerPos[0].z, false))).get();
-                        EXECUTOR.submit(() -> {
-                            if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
-                                calculateChunk(world.getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, entityContext);
+                    if (!caching) {
+                        POS.clear();
+                        CHUNK_MAP.clear();
+                        ClientPlayerEntity player = CLIENT.player;
+                        ClientWorld world = CLIENT.world;
+                        BlockPos playerPos = player.getBlockPos();
+                        EntityContext entityContext = EntityContext.of(player);
+                        ChunkLightingView block = world.getLightingProvider().get(LightType.BLOCK);
+                        ChunkLightingView sky = showNumber ? null : world.getLightingProvider().get(LightType.SKY);
+                        BlockPos.Mutable downPos = new BlockPos.Mutable();
+                        Iterable<BlockPos> iterate = BlockPos.iterate(playerPos.getX() - reach, playerPos.getY() - reach, playerPos.getZ() - reach,
+                                playerPos.getX() + reach, playerPos.getY() + reach, playerPos.getZ() + reach);
+                        HashMap<Long, Object> map = Maps.newHashMap();
+                        CHUNK_MAP.put(new ChunkPos(0, 0), map);
+                        for (BlockPos blockPos : iterate) {
+                            downPos.set(blockPos.getX(), blockPos.getY() - 1, blockPos.getZ());
+                            if (showNumber) {
+                                int level = getCrossLevel(blockPos, downPos, world, block, entityContext);
+                                if (level >= 0) {
+                                    map.put(blockPos.asLong(), level);
+                                }
                             } else {
-                                CHUNK_MAP.remove(pos);
+                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                if (type != CrossType.NONE) {
+                                    map.put(blockPos.asLong(), type);
+                                }
                             }
-                        });
-                        POS.remove(pos);
-                    }
-                    Iterator<Map.Entry<ChunkPos, Map<Long, Object>>> chunkMapIterator = CHUNK_MAP.entrySet().iterator();
-                    while (chunkMapIterator.hasNext()) {
-                        Map.Entry<ChunkPos, Map<Long, Object>> pos = chunkMapIterator.next();
-                        if (MathHelper.abs(pos.getKey().x - playerPosX) > getChunkRange() * 2 || MathHelper.abs(pos.getKey().z - playerPosZ) > getChunkRange() * 2) {
-                            chunkMapIterator.remove();
+                        }
+                    } else {
+                        ClientPlayerEntity player = CLIENT.player;
+                        ClientWorld world = CLIENT.world;
+                        EntityContext entityContext = EntityContext.of(player);
+                        Vec3d[] playerPos = {null};
+                        int playerPosX = ((int) player.getX()) >> 4;
+                        int playerPosZ = ((int) player.getZ()) >> 4;
+                        if (ticks % 20 == 0) {
+                            for (int chunkX = playerPosX - getChunkRange(); chunkX <= playerPosX + getChunkRange(); chunkX++) {
+                                for (int chunkZ = playerPosZ - getChunkRange(); chunkZ <= playerPosZ + getChunkRange(); chunkZ++) {
+                                    ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+                                    if (!CHUNK_MAP.containsKey(chunkPos))
+                                        queueChunk(chunkPos);
+                                }
+                            }
+                        }
+                        if (!POS.isEmpty()) {
+                            if (playerPos[0] == null) {
+                                playerPos[0] = player.getPos();
+                            }
+                            ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> value.toBlockPos(8, 0, 8).getSquaredDistance(playerPos[0].x, 0, playerPos[0].z, false))).get();
+                            POS.remove(pos);
+                            EXECUTOR.submit(() -> {
+                                if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
+                                    calculateChunk(world.getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, entityContext);
+                                } else {
+                                    CHUNK_MAP.remove(pos);
+                                }
+                            });
+                        }
+                        if (ticks % 50 == 0) {
+                            Iterator<Map.Entry<ChunkPos, Map<Long, Object>>> chunkMapIterator = CHUNK_MAP.entrySet().iterator();
+                            while (chunkMapIterator.hasNext()) {
+                                Map.Entry<ChunkPos, Map<Long, Object>> pos = chunkMapIterator.next();
+                                if (MathHelper.abs(pos.getKey().x - playerPosX) > getChunkRange() * 2 || MathHelper.abs(pos.getKey().z - playerPosZ) > getChunkRange() * 2) {
+                                    chunkMapIterator.remove();
+                                }
+                            }
                         }
                     }
                 }
@@ -137,8 +172,9 @@ public class LightOverlay implements ClientModInitializer {
     }
     
     public static void queueChunk(ChunkPos pos) {
-        if (!POS.contains(pos))
-            POS.add(0, pos);
+        if (caching)
+            if (!POS.contains(pos))
+                POS.add(0, pos);
     }
     
     public static int getChunkRange() {
@@ -147,9 +183,9 @@ public class LightOverlay implements ClientModInitializer {
     
     private static void calculateChunk(WorldChunk chunk, World world, ChunkPos chunkPos, EntityContext entityContext) {
         Map<Long, Object> map = Maps.newHashMap();
-        if (chunk != null) {
-            ChunkLightingView block = chunk.getLightingProvider().get(LightType.BLOCK);
-            ChunkLightingView sky = showNumber ? null : chunk.getLightingProvider().get(LightType.SKY);
+        if (world != null) {
+            ChunkLightingView block = world.getLightingProvider().get(LightType.BLOCK);
+            ChunkLightingView sky = showNumber ? null : world.getLightingProvider().get(LightType.SKY);
             for (BlockPos pos : BlockPos.iterate(chunkPos.getStartX(), 0, chunkPos.getStartZ(), chunkPos.getEndX(), 256, chunkPos.getEndZ())) {
                 BlockPos down = pos.down();
                 if (showNumber) {
@@ -191,11 +227,13 @@ public class LightOverlay implements ClientModInitializer {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.allowsSpawning(world, down, testingEntityType))
             return CrossType.NONE;
-        if (block.getLightLevel(pos) > crossLevel)
+        int blockLightLevel = block.getLightLevel(pos);
+        int skyLightLevel = sky.getLightLevel(pos);
+        if (blockLightLevel > higherCrossLevel)
             return CrossType.NONE;
-        if (sky.getLightLevel(pos) > crossLevel)
+        if (skyLightLevel > higherCrossLevel)
             return CrossType.YELLOW;
-        return CrossType.RED;
+        return lowerCrossLevel >= 0 && blockLightLevel > lowerCrossLevel ? CrossType.SECONDARY : CrossType.RED;
     }
     
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockView world, ChunkLightingView view, EntityContext entityContext) {
@@ -214,7 +252,7 @@ public class LightOverlay implements ClientModInitializer {
         return view.getLightLevel(pos);
     }
     
-    public static void renderCross(Tessellator tessellator, BufferBuilder buffer, Camera camera, World world, BlockPos pos, int color, EntityContext entityContext) {
+    public static void renderCross(Camera camera, World world, BlockPos pos, int color, EntityContext entityContext) {
         double d0 = camera.getPos().x;
         double d1 = camera.getPos().y - .005D;
         VoxelShape upperOutlineShape = world.getBlockState(pos).getOutlineShape(world, pos, entityContext);
@@ -222,19 +260,22 @@ public class LightOverlay implements ClientModInitializer {
             d1 -= upperOutlineShape.getMaximum(Direction.Axis.Y);
         double d2 = camera.getPos().z;
         
-        buffer.begin(1, VertexFormats.POSITION_COLOR);
         int red = (color >> 16) & 255;
         int green = (color >> 8) & 255;
         int blue = color & 255;
-        buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).next();
-        buffer.vertex(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
-        buffer.vertex(pos.getX() - .01 + 1 - d0, pos.getY() - d1, pos.getZ() + .01 - d2).color(red, green, blue, 255).next();
-        buffer.vertex(pos.getX() + .01 - d0, pos.getY() - d1, pos.getZ() - .01 + 1 - d2).color(red, green, blue, 255).next();
-        tessellator.draw();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        RenderSystem.color4f(red / 255f, green / 255f, blue / 255f, 1f);
+        GL11.glVertex3d(x + .01 - d0, y - d1, z + .01 - d2);
+        GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z - .01 + 1 - d2);
+        GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z + .01 - d2);
+        GL11.glVertex3d(x + .01 - d0, y - d1, z - .01 + 1 - d2);
     }
     
+    @SuppressWarnings("deprecation")
     public static void renderLevel(MinecraftClient client, Camera camera, World world, BlockPos pos, BlockPos down, int level, EntityContext entityContext) {
-        String string_1 = String.valueOf(level);
+        String text = String.valueOf(level);
         TextRenderer textRenderer_1 = client.textRenderer;
         double double_4 = camera.getPos().x;
         double double_5 = camera.getPos().y;
@@ -248,11 +289,11 @@ public class LightOverlay implements ClientModInitializer {
         RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
         RenderSystem.scalef(-size, -size, size);
-        float float_3 = (float) (-textRenderer_1.getStringWidth(string_1)) / 2.0F + 0.4f;
+        float float_3 = (float) (-textRenderer_1.getStringWidth(text)) / 2.0F + 0.4f;
         RenderSystem.enableAlphaTest();
-        VertexConsumerProvider.Immediate vertexConsumerProvider$Immediate_1 = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        textRenderer_1.draw(string_1, float_3, -3.5f, level > crossLevel ? 0xff042404 : 0xff731111, false, Rotation3.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
-        vertexConsumerProvider$Immediate_1.draw();
+        VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
+        textRenderer_1.draw(text, float_3, -3.5f, level > higherCrossLevel ? 0xff042404 : (lowerCrossLevel >= 0 && level > lowerCrossLevel ? 0xff0066ff : 0xff731111), false, Rotation3.identity().getMatrix(), immediate, false, 0, 15728880);
+        immediate.draw();
         RenderSystem.popMatrix();
     }
     
@@ -260,6 +301,7 @@ public class LightOverlay implements ClientModInitializer {
         try {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            secondaryColor = 0x0000FF;
             if (!file.exists() || !file.canRead())
                 saveConfig(file);
             FileInputStream fis = new FileInputStream(file);
@@ -268,6 +310,8 @@ public class LightOverlay implements ClientModInitializer {
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
+            secondaryLevel = Integer.parseInt((String) properties.computeIfAbsent("secondaryLevel", a -> "-1"));
+            caching = ((String) properties.computeIfAbsent("caching", a -> "false")).equalsIgnoreCase("true");
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             smoothLines = ((String) properties.computeIfAbsent("smoothLines", a -> "true")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
@@ -286,14 +330,24 @@ public class LightOverlay implements ClientModInitializer {
                 b = Integer.parseInt((String) properties.computeIfAbsent("redColorBlue", a -> "0"));
                 redColor = (r << 16) + (g << 8) + b;
             }
+            {
+                int r, g, b;
+                r = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorRed", a -> "0"));
+                g = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorGreen", a -> "0"));
+                b = Integer.parseInt((String) properties.computeIfAbsent("secondaryColorBlue", a -> "255"));
+                secondaryColor = (r << 16) + (g << 8) + b;
+            }
             saveConfig(file);
         } catch (Exception e) {
             e.printStackTrace();
             reach = 12;
             crossLevel = 7;
+            secondaryLevel = -1;
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
+            secondaryColor = 0x0000FF;
+            caching = false;
             showNumber = false;
             smoothLines = true;
             underwater = false;
@@ -303,6 +357,9 @@ public class LightOverlay implements ClientModInitializer {
                 ex.printStackTrace();
             }
         }
+        if (secondaryLevel >= crossLevel) System.err.println("[Light Overlay] Secondary Level is higher than Cross Level");
+        lowerCrossLevel = Math.min(crossLevel, secondaryLevel);
+        higherCrossLevel = Math.max(crossLevel, secondaryLevel);
         CHUNK_MAP.clear();
         POS.clear();
     }
@@ -314,6 +371,10 @@ public class LightOverlay implements ClientModInitializer {
         fos.write(("reach=" + reach).getBytes());
         fos.write("\n".getBytes());
         fos.write(("crossLevel=" + crossLevel).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryLevel=" + secondaryLevel).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("caching=" + caching).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
@@ -334,7 +395,17 @@ public class LightOverlay implements ClientModInitializer {
         fos.write(("redColorGreen=" + ((redColor >> 8) & 255)).getBytes());
         fos.write("\n".getBytes());
         fos.write(("redColorBlue=" + (redColor & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorRed=" + ((secondaryColor >> 16) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorGreen=" + ((secondaryColor >> 8) & 255)).getBytes());
+        fos.write("\n".getBytes());
+        fos.write(("secondaryColorBlue=" + (secondaryColor & 255)).getBytes());
         fos.close();
+    }
+    
+    private static KeyBinding createKeyBinding(Identifier id, InputUtil.Type type, int code, String category) {
+        return KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + id.getNamespace() + "." + id.getPath(), type, code, category));
     }
     
     @Override
@@ -344,72 +415,25 @@ public class LightOverlay implements ClientModInitializer {
         
         // Setup
         testingEntityType = EntityType.Builder.create(EntityCategory.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
-        MinecraftClient client = MinecraftClient.getInstance();
-        KeyBindingRegistry.INSTANCE.addCategory(KEYBIND_CATEGORY);
-        KeyBindingRegistry.INSTANCE.register(enableOverlay = FabricKeyBinding.Builder.create(ENABLE_OVERLAY_KEYBIND, InputUtil.Type.KEYSYM, 296, KEYBIND_CATEGORY).build());
-        KeyBindingRegistry.INSTANCE.register(increaseReach = FabricKeyBinding.Builder.create(INCREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistry.INSTANCE.register(decreaseReach = FabricKeyBinding.Builder.create(DECREASE_REACH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistry.INSTANCE.register(increaseLineWidth = FabricKeyBinding.Builder.create(INCREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        KeyBindingRegistry.INSTANCE.register(decreaseLineWidth = FabricKeyBinding.Builder.create(DECREASE_LINE_WIDTH_KEYBIND, InputUtil.Type.KEYSYM, -1, KEYBIND_CATEGORY).build());
-        ClothClientHooks.HANDLE_INPUT.register(minecraftClient -> {
-            while (enableOverlay.wasPressed())
+        ClientTickCallback.EVENT.register(minecraftClient -> {
+            while (ENABLE_OVERLAY.wasPressed())
                 enabled = !enabled;
-            while (increaseReach.wasPressed()) {
-                if (reach < 64)
-                    reach++;
-                try {
-                    saveConfig(configFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                client.player.addChatMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
-            }
-            while (decreaseReach.wasPressed()) {
-                if (reach > 1)
-                    reach--;
-                try {
-                    saveConfig(configFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                client.player.addChatMessage(new TranslatableText("text.lightoverlay.current_reach", reach), false);
-            }
-            while (increaseLineWidth.wasPressed()) {
-                if (lineWidth < 7)
-                    lineWidth += 0.1f;
-                try {
-                    saveConfig(configFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                client.player.addChatMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
-            }
-            while (decreaseLineWidth.wasPressed()) {
-                if (lineWidth > 1)
-                    lineWidth -= 0.1F;
-                try {
-                    saveConfig(configFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                client.player.addChatMessage(new TranslatableText("text.lightoverlay.current_line_width", FORMAT.format(lineWidth)), false);
-            }
         });
         ClothClientHooks.DEBUG_RENDER_PRE.register(() -> {
             if (LightOverlay.enabled) {
-                PlayerEntity playerEntity = client.player;
+                PlayerEntity playerEntity = CLIENT.player;
                 int playerPosX = ((int) playerEntity.getX()) >> 4;
                 int playerPosZ = ((int) playerEntity.getZ()) >> 4;
                 EntityContext entityContext = EntityContext.of(playerEntity);
-                World world = client.world;
+                World world = CLIENT.world;
                 BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
-                Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
+                Camera camera = CLIENT.gameRenderer.getCamera();
                 if (showNumber) {
                     RenderSystem.enableTexture();
                     RenderSystem.depthMask(true);
                     BlockPos.Mutable mutable = new BlockPos.Mutable();
                     for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
-                        if (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange()) {
+                        if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                             continue;
                         }
                         for (Map.Entry<Long, Object> objectEntry : entry.getValue().entrySet()) {
@@ -417,26 +441,23 @@ public class LightOverlay implements ClientModInitializer {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getKey()), BlockPos.unpackLongY(objectEntry.getKey()), BlockPos.unpackLongZ(objectEntry.getKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
                                     BlockPos down = mutable.down();
-                                    LightOverlay.renderLevel(client, camera, world, mutable, down, (Integer) objectEntry.getValue(), entityContext);
+                                    LightOverlay.renderLevel(CLIENT, camera, world, mutable, down, (Integer) objectEntry.getValue(), entityContext);
                                 }
                             }
                         }
                     }
-                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                     RenderSystem.enableDepthTest();
                 } else {
                     RenderSystem.enableDepthTest();
                     RenderSystem.disableTexture();
                     RenderSystem.enableBlend();
                     RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
-                    RenderSystem.disableLighting();
                     if (smoothLines) GL11.glEnable(GL11.GL_LINE_SMOOTH);
-                    RenderSystem.lineWidth(lineWidth);
-                    Tessellator tessellator = Tessellator.getInstance();
-                    BufferBuilder buffer = tessellator.getBuffer();
+                    GL11.glLineWidth(lineWidth);
+                    GL11.glBegin(GL11.GL_LINES);
                     BlockPos.Mutable mutable = new BlockPos.Mutable();
                     for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
-                        if (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange()) {
+                        if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                             continue;
                         }
                         for (Map.Entry<Long, Object> objectEntry : entry.getValue().entrySet()) {
@@ -444,12 +465,13 @@ public class LightOverlay implements ClientModInitializer {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getKey()), BlockPos.unpackLongY(objectEntry.getKey()), BlockPos.unpackLongZ(objectEntry.getKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
                                     BlockPos down = mutable.down();
-                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : yellowColor;
-                                    LightOverlay.renderCross(tessellator, buffer, camera, world, mutable, color, entityContext);
+                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : secondaryColor;
+                                    LightOverlay.renderCross(camera, world, mutable, color, entityContext);
                                 }
                             }
                         }
                     }
+                    GL11.glEnd();
                     RenderSystem.disableBlend();
                     RenderSystem.enableTexture();
                     if (smoothLines) GL11.glDisable(GL11.GL_LINE_SMOOTH);
@@ -461,6 +483,7 @@ public class LightOverlay implements ClientModInitializer {
     private enum CrossType {
         YELLOW,
         RED,
+        SECONDARY,
         NONE
     }
 }

@@ -6,8 +6,10 @@
 /.gradle
 */.gradle
 /minecraft
+*/minecraft
 /out
 */run
+*/out
 /run
 /classes
 
