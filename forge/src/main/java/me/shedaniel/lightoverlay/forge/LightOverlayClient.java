@@ -3,16 +3,13 @@ package me.shedaniel.lightoverlay.forge;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.multiplayer.ClientChunkProvider;
 import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.TransformationMatrix;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.client.world.ClientWorld;
@@ -37,6 +34,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.AbstractChunkProvider;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.lighting.IWorldLightListener;
@@ -169,7 +167,7 @@ public class LightOverlayClient {
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
-        RenderSystem.color4f(red / 255f, green / 255f, blue / 255f, 1f);
+        GlStateManager.color4f(red / 255f, green / 255f, blue / 255f, 1f);
         GL11.glVertex3d(x + .01 - d0, y - d1, z + .01 - d2);
         GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z - .01 + 1 - d2);
         GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z + .01 - d2);
@@ -185,18 +183,16 @@ public class LightOverlayClient {
         if (!upperOutlineShape.isEmpty())
             double_5 += 1 - upperOutlineShape.getEnd(Direction.Axis.Y);
         double double_6 = info.getProjectedView().z;
-        RenderSystem.pushMatrix();
-        RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
-        RenderSystem.rotatef(90, 1, 0, 0);
-        RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+        GlStateManager.pushMatrix();
+        GlStateManager.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
+        GlStateManager.rotatef(90, 1, 0, 0);
+        GlStateManager.normal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
-        RenderSystem.scalef(-size, -size, size);
+        GlStateManager.scalef(-size, -size, size);
         float float_3 = (float) (-fontRenderer.getStringWidth(string_1)) / 2.0F + 0.4f;
-        RenderSystem.enableAlphaTest();
-        IRenderTypeBuffer.Impl vertexConsumerProvider$Immediate_1 = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
-        fontRenderer.renderString(string_1, float_3, -3.5f, level > higherCrossLevel ? 0xff042404 : (lowerCrossLevel >= 0 && level > lowerCrossLevel ? 0xff0066ff : 0xff731111), false, TransformationMatrix.identity().getMatrix(), vertexConsumerProvider$Immediate_1, false, 0, 15728880);
-        vertexConsumerProvider$Immediate_1.finish();
-        RenderSystem.popMatrix();
+        GlStateManager.enableAlphaTest();
+        fontRenderer.drawString(string_1, float_3, -3.5f, level > higherCrossLevel ? 0xff042404 : (lowerCrossLevel >= 0 && level > lowerCrossLevel ? 0xff0066ff : 0xff731111));
+        GlStateManager.popMatrix();
     }
     
     @SubscribeEvent(receiveCanceled = true)
@@ -240,9 +236,10 @@ public class LightOverlayClient {
                         ClientWorld world = minecraft.world;
                         BlockPos playerPos = player.getPosition();
                         ISelectionContext entityContext = ISelectionContext.forEntity(player);
-                        IWorldLightListener block = world.getLightManager().getLightEngine(LightType.BLOCK);
-                        IWorldLightListener sky = showNumber ? null : world.getLightManager().getLightEngine(LightType.SKY);
-                        BlockPos.Mutable downPos = new BlockPos.Mutable();
+                        ClientChunkProvider chunkProvider = world.getChunkProvider();
+                        IWorldLightListener block = chunkProvider.func_212863_j_().getLightEngine(LightType.BLOCK);
+                        IWorldLightListener sky = showNumber ? null : chunkProvider.func_212863_j_().getLightEngine(LightType.SKY);
+                        BlockPos.MutableBlockPos downPos = new BlockPos.MutableBlockPos();
                         Iterable<BlockPos> iterate = BlockPos.getAllInBoxMutable(playerPos.getX() - reach, playerPos.getY() - reach, playerPos.getZ() - reach,
                                 playerPos.getX() + reach, playerPos.getY() + reach, playerPos.getZ() + reach);
                         HashMap<Long, Object> map = Maps.newHashMap();
@@ -266,8 +263,8 @@ public class LightOverlayClient {
                         ClientWorld world = minecraft.world;
                         ISelectionContext selectionContext = ISelectionContext.forEntity(player);
                         Vec3d[] playerPos = {null};
-                        int playerPosX = ((int) player.getPosX()) >> 4;
-                        int playerPosZ = ((int) player.getPosZ()) >> 4;
+                        int playerPosX = ((int) player.posX) >> 4;
+                        int playerPosZ = ((int) player.posZ) >> 4;
                         if (ticks % 20 == 0) {
                             for (int chunkX = playerPosX - getChunkRange(); chunkX <= playerPosX + getChunkRange(); chunkX++) {
                                 for (int chunkZ = playerPosZ - getChunkRange(); chunkZ <= playerPosZ + getChunkRange(); chunkZ++) {
@@ -284,7 +281,7 @@ public class LightOverlayClient {
                             ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> value.getBlock(8, 0, 8).distanceSq(playerPos[0].x, 0, playerPos[0].z, false))).get();
                             EXECUTOR.submit(() -> {
                                 if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
-                                    calculateChunk(world.getChunkProvider().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, selectionContext);
+                                    calculateChunk(world.getChunkProvider(), world.getChunkProvider().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, selectionContext);
                                 } else {
                                     CHUNK_MAP.remove(pos);
                                 }
@@ -308,11 +305,11 @@ public class LightOverlayClient {
         }
     }
     
-    private static void calculateChunk(Chunk chunk, World world, ChunkPos chunkPos, ISelectionContext selectionContext) {
+    private static void calculateChunk(AbstractChunkProvider chunkProvider, Chunk chunk, World world, ChunkPos chunkPos, ISelectionContext selectionContext) {
         Map<Long, Object> map = Maps.newHashMap();
         if (chunk != null) {
-            IWorldLightListener block = chunk.getWorldLightManager().getLightEngine(LightType.BLOCK);
-            IWorldLightListener sky = showNumber ? null : chunk.getWorldLightManager().getLightEngine(LightType.SKY);
+            IWorldLightListener block = chunkProvider.func_212863_j_().getLightEngine(LightType.BLOCK);
+            IWorldLightListener sky = showNumber ? null : chunkProvider.func_212863_j_().getLightEngine(LightType.SKY);
             for (BlockPos pos : BlockPos.getAllInBoxMutable(chunkPos.getXStart(), 0, chunkPos.getZStart(), chunkPos.getXEnd(), 256, chunkPos.getZEnd())) {
                 BlockPos down = pos.down();
                 if (showNumber) {
@@ -321,7 +318,7 @@ public class LightOverlayClient {
                         map.put(pos.toLong(), level);
                     }
                 } else {
-                    Biome biome = world.getBiomeManager().getBiome(pos);
+                    Biome biome = world.getBiome(pos);
                     if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
                         CrossType type = LightOverlayClient.getCrossType(pos, down, chunk, block, sky, selectionContext);
                         if (type != CrossType.NONE) {
@@ -336,19 +333,21 @@ public class LightOverlayClient {
     
     public static void renderWorldLast() {
         if (LightOverlayClient.enabled) {
-            RenderSystem.pushMatrix();
+            GlStateManager.pushMatrix();
             Minecraft client = Minecraft.getInstance();
             ClientPlayerEntity playerEntity = client.player;
-            int playerPosX = ((int) playerEntity.getPosX()) >> 4;
-            int playerPosZ = ((int) playerEntity.getPosZ()) >> 4;
+            int playerPosX = ((int) playerEntity.posX) >> 4;
+            int playerPosZ = ((int) playerEntity.posZ) >> 4;
             ISelectionContext selectionContext = ISelectionContext.forEntity(playerEntity);
             World world = client.world;
             BlockPos playerPos = playerEntity.getPosition();
             ActiveRenderInfo info = client.gameRenderer.getActiveRenderInfo();
             if (showNumber) {
-                RenderSystem.enableTexture();
-                RenderSystem.depthMask(true);
-                BlockPos.Mutable mutable = new BlockPos.Mutable();
+                GlStateManager.enableBlend();
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                GlStateManager.enableTexture();
+                GlStateManager.depthMask(true);
+                BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
                 for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
                     if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                         continue;
@@ -363,17 +362,18 @@ public class LightOverlayClient {
                         }
                     }
                 }
-                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-                RenderSystem.enableDepthTest();
+                GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.enableDepthTest();
+                GlStateManager.disableBlend();
             } else {
-                RenderSystem.enableDepthTest();
-                RenderSystem.disableTexture();
-                RenderSystem.enableBlend();
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                GlStateManager.enableDepthTest();
+                GlStateManager.disableTexture();
+                GlStateManager.enableBlend();
+                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
                 if (smoothLines) GL11.glEnable(GL11.GL_LINE_SMOOTH);
                 GL11.glLineWidth(lineWidth);
                 GL11.glBegin(GL11.GL_LINES);
-                BlockPos.Mutable mutable = new BlockPos.Mutable();
+                BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
                 for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
                     if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                         continue;
@@ -390,11 +390,11 @@ public class LightOverlayClient {
                     }
                 }
                 GL11.glEnd();
-                RenderSystem.disableBlend();
-                RenderSystem.enableTexture();
+                GlStateManager.disableBlend();
+                GlStateManager.enableTexture();
                 if (smoothLines) GL11.glDisable(GL11.GL_LINE_SMOOTH);
             }
-            RenderSystem.popMatrix();
+            GlStateManager.popMatrix();
         }
     }
     

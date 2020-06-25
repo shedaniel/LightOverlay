@@ -1,2 +1,2 @@
 accessWidener	v1  named
-accessible  field  net/minecraft/network/packet/s2c/play/ChunkDeltaUpdateS2CPacket chunkPos Lnet/minecraft/util/math/ChunkPos;
+accessible  field  net/minecraft/client/network/packet/ChunkDeltaUpdateS2CPacket chunkPos Lnet/minecraft/util/math/ChunkPos;

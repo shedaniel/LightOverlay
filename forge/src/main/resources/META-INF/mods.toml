@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[29,)"
+loaderVersion="[26,)"
 issueTrackerURL="https://github.com/shedaniel/LightOverlay/issues/" #optional
 logoFile="icon.png"
 authors="shedaniel"
@@ -14,6 +14,6 @@ To provide users with NEI-like light overlay.
 [[dependencies.lightoverlay-forge]]
     modId="cloth-config2"
     mandatory=true
-    versionRange="[3.0,)"
+    versionRange="[1.0,)"
     ordering="NONE"
     side="CLIENT"

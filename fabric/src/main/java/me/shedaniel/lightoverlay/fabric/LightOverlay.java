@@ -3,7 +3,6 @@ package me.shedaniel.lightoverlay.fabric;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.cloth.hooks.ClothClientHooks;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -16,10 +15,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.Rotation3;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCategory;
@@ -34,8 +30,9 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.chunk.light.ChunkLightingView;
 import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL11;
@@ -95,8 +92,9 @@ public class LightOverlay implements ClientModInitializer {
                         ClientWorld world = CLIENT.world;
                         BlockPos playerPos = player.getBlockPos();
                         EntityContext entityContext = EntityContext.of(player);
-                        ChunkLightingView block = world.getLightingProvider().get(LightType.BLOCK);
-                        ChunkLightingView sky = showNumber ? null : world.getLightingProvider().get(LightType.SKY);
+                        ChunkManager chunkManager = world.getChunkManager();
+                        ChunkLightingView block = chunkManager.getLightingProvider().get(LightType.BLOCK);
+                        ChunkLightingView sky = showNumber ? null : chunkManager.getLightingProvider().get(LightType.SKY);
                         BlockPos.Mutable downPos = new BlockPos.Mutable();
                         Iterable<BlockPos> iterate = BlockPos.iterate(playerPos.getX() - reach, playerPos.getY() - reach, playerPos.getZ() - reach,
                                 playerPos.getX() + reach, playerPos.getY() + reach, playerPos.getZ() + reach);
@@ -121,8 +119,8 @@ public class LightOverlay implements ClientModInitializer {
                         ClientWorld world = CLIENT.world;
                         EntityContext entityContext = EntityContext.of(player);
                         Vec3d[] playerPos = {null};
-                        int playerPosX = ((int) player.getX()) >> 4;
-                        int playerPosZ = ((int) player.getZ()) >> 4;
+                        int playerPosX = ((int) player.x) >> 4;
+                        int playerPosZ = ((int) player.z) >> 4;
                         if (ticks % 20 == 0) {
                             for (int chunkX = playerPosX - getChunkRange(); chunkX <= playerPosX + getChunkRange(); chunkX++) {
                                 for (int chunkZ = playerPosZ - getChunkRange(); chunkZ <= playerPosZ + getChunkRange(); chunkZ++) {
@@ -140,7 +138,7 @@ public class LightOverlay implements ClientModInitializer {
                             POS.remove(pos);
                             EXECUTOR.submit(() -> {
                                 if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
-                                    calculateChunk(world.getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, entityContext);
+                                    calculateChunk(world.getChunkManager(), world.getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, entityContext);
                                 } else {
                                     CHUNK_MAP.remove(pos);
                                 }
@@ -181,11 +179,11 @@ public class LightOverlay implements ClientModInitializer {
         return Math.max(MathHelper.ceil(reach / 16f), 1);
     }
     
-    private static void calculateChunk(WorldChunk chunk, World world, ChunkPos chunkPos, EntityContext entityContext) {
+    private static void calculateChunk(ChunkManager chunkManager, Chunk chunk, World world, ChunkPos chunkPos, EntityContext entityContext) {
         Map<Long, Object> map = Maps.newHashMap();
         if (world != null) {
-            ChunkLightingView block = world.getLightingProvider().get(LightType.BLOCK);
-            ChunkLightingView sky = showNumber ? null : world.getLightingProvider().get(LightType.SKY);
+            ChunkLightingView block = chunkManager.getLightingProvider().get(LightType.BLOCK);
+            ChunkLightingView sky = showNumber ? null : chunkManager.getLightingProvider().get(LightType.SKY);
             for (BlockPos pos : BlockPos.iterate(chunkPos.getStartX(), 0, chunkPos.getStartZ(), chunkPos.getEndX(), 256, chunkPos.getEndZ())) {
                 BlockPos down = pos.down();
                 if (showNumber) {
@@ -194,7 +192,7 @@ public class LightOverlay implements ClientModInitializer {
                         map.put(pos.asLong(), level);
                     }
                 } else {
-                    Biome biome = world.getBiomeAccess().getBiome(pos);
+                    Biome biome = world.getBiome(pos);
                     if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
                         CrossType type = LightOverlay.getCrossType(pos, down, chunk, block, sky, entityContext);
                         if (type != CrossType.NONE) {
@@ -266,7 +264,7 @@ public class LightOverlay implements ClientModInitializer {
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
-        RenderSystem.color4f(red / 255f, green / 255f, blue / 255f, 1f);
+        GlStateManager.color4f(red / 255f, green / 255f, blue / 255f, 1f);
         GL11.glVertex3d(x + .01 - d0, y - d1, z + .01 - d2);
         GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z - .01 + 1 - d2);
         GL11.glVertex3d(x - .01 + 1 - d0, y - d1, z + .01 - d2);
@@ -283,18 +281,16 @@ public class LightOverlay implements ClientModInitializer {
         if (!upperOutlineShape.isEmpty())
             double_5 += 1 - upperOutlineShape.getMaximum(Direction.Axis.Y);
         double double_6 = camera.getPos().z;
-        RenderSystem.pushMatrix();
-        RenderSystem.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
-        RenderSystem.rotatef(90, 1, 0, 0);
-        RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+        GlStateManager.pushMatrix();
+        GlStateManager.translatef((float) (pos.getX() + 0.5f - double_4), (float) (pos.getY() - double_5) + 0.005f, (float) (pos.getZ() + 0.5f - double_6));
+        GlStateManager.rotatef(90, 1, 0, 0);
+        GlStateManager.normal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
-        RenderSystem.scalef(-size, -size, size);
+        GlStateManager.scalef(-size, -size, size);
         float float_3 = (float) (-textRenderer_1.getStringWidth(text)) / 2.0F + 0.4f;
-        RenderSystem.enableAlphaTest();
-        VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        textRenderer_1.draw(text, float_3, -3.5f, level > higherCrossLevel ? 0xff042404 : (lowerCrossLevel >= 0 && level > lowerCrossLevel ? 0xff0066ff : 0xff731111), false, Rotation3.identity().getMatrix(), immediate, false, 0, 15728880);
-        immediate.draw();
-        RenderSystem.popMatrix();
+        GlStateManager.enableAlphaTest();
+        textRenderer_1.draw(text, float_3, -3.5f, level > higherCrossLevel ? 0xff042404 : (lowerCrossLevel >= 0 && level > lowerCrossLevel ? 0xff0066ff : 0xff731111));
+        GlStateManager.popMatrix();
     }
     
     static void loadConfig(File file) {
@@ -422,15 +418,17 @@ public class LightOverlay implements ClientModInitializer {
         ClothClientHooks.DEBUG_RENDER_PRE.register(() -> {
             if (LightOverlay.enabled) {
                 PlayerEntity playerEntity = CLIENT.player;
-                int playerPosX = ((int) playerEntity.getX()) >> 4;
-                int playerPosZ = ((int) playerEntity.getZ()) >> 4;
+                int playerPosX = ((int) playerEntity.x) >> 4;
+                int playerPosZ = ((int) playerEntity.z) >> 4;
                 EntityContext entityContext = EntityContext.of(playerEntity);
                 World world = CLIENT.world;
-                BlockPos playerPos = new BlockPos(playerEntity.getX(), playerEntity.getY(), playerEntity.getZ());
+                BlockPos playerPos = new BlockPos(playerEntity.x, playerEntity.y, playerEntity.z);
                 Camera camera = CLIENT.gameRenderer.getCamera();
                 if (showNumber) {
-                    RenderSystem.enableTexture();
-                    RenderSystem.depthMask(true);
+                    GlStateManager.enableBlend();
+                    GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                    GlStateManager.enableTexture();
+                    GlStateManager.depthMask(true);
                     BlockPos.Mutable mutable = new BlockPos.Mutable();
                     for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
                         if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
@@ -446,12 +444,13 @@ public class LightOverlay implements ClientModInitializer {
                             }
                         }
                     }
-                    RenderSystem.enableDepthTest();
+                    GlStateManager.enableDepthTest();
+                    GlStateManager.disableBlend();
                 } else {
-                    RenderSystem.enableDepthTest();
-                    RenderSystem.disableTexture();
-                    RenderSystem.enableBlend();
-                    RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
+                    GlStateManager.enableDepthTest();
+                    GlStateManager.disableTexture();
+                    GlStateManager.enableBlend();
+                    GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
                     if (smoothLines) GL11.glEnable(GL11.GL_LINE_SMOOTH);
                     GL11.glLineWidth(lineWidth);
                     GL11.glBegin(GL11.GL_LINES);
@@ -472,8 +471,8 @@ public class LightOverlay implements ClientModInitializer {
                         }
                     }
                     GL11.glEnd();
-                    RenderSystem.disableBlend();
-                    RenderSystem.enableTexture();
+                    GlStateManager.disableBlend();
+                    GlStateManager.enableTexture();
                     if (smoothLines) GL11.glDisable(GL11.GL_LINE_SMOOTH);
                 }
             }

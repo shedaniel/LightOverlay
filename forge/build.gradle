@@ -43,6 +43,6 @@ repositories {
 }
 
 dependencies {
-    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-31.1.39")
+    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-28.2.19")
     implementation(fg.deobf("curse.maven:cloth-config-forge:${rootProject.cloth_config_forge_commit}"))
 }

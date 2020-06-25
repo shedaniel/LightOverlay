@@ -9,6 +9,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 
+import java.util.Locale;
 import java.util.Optional;
 
 public class LightOverlayCloth {
@@ -32,9 +33,36 @@ public class LightOverlayCloth {
             general.addEntry(eb.startBooleanToggle("config.lightoverlay.smoothLines", LightOverlayClient.smoothLines).setDefaultValue(true).setSaveConsumer(bool -> LightOverlayClient.smoothLines = bool).build());
             general.addEntry(eb.startBooleanToggle("config.lightoverlay.underwater", LightOverlayClient.underwater).setDefaultValue(false).setSaveConsumer(bool -> LightOverlayClient.underwater = bool).build());
             general.addEntry(eb.startIntSlider("config.lightoverlay.lineWidth", MathHelper.floor(LightOverlayClient.lineWidth * 100), 100, 700).setDefaultValue(100).setTextGetter(integer -> "Light Width: " + LightOverlayClient.FORMAT.format(integer / 100d)).setSaveConsumer(integer -> LightOverlayClient.lineWidth = integer / 100f).build());
-            general.addEntry(eb.startColorField("config.lightoverlay.yellowColor", LightOverlayClient.yellowColor).setDefaultValue(0xFFFF00).setSaveConsumer(color -> LightOverlayClient.yellowColor = color).build());
-            general.addEntry(eb.startColorField("config.lightoverlay.redColor", LightOverlayClient.redColor).setDefaultValue(0xFF0000).setSaveConsumer(color -> LightOverlayClient.redColor = color).build());
-            general.addEntry(eb.startColorField("config.lightoverlay.secondaryColor", LightOverlayClient.secondaryColor).setDefaultValue(0x0000FF).setSaveConsumer(color -> LightOverlayClient.secondaryColor = color).build());
+            general.addEntry(eb.startStrField("config.lightoverlay.yellowColor", "#" + toStringColor(LightOverlayClient.yellowColor))
+                    .setDefaultValue("#FFFF00")
+                    .setSaveConsumer(str -> LightOverlayClient.yellowColor = toIntColor(str))
+                    .setErrorSupplier(s -> {
+                        if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
+                            return Optional.of(I18n.format("config.lightoverlay.invalidColor"));
+                        else return Optional.empty();
+                    })
+                    .build()
+            );
+            general.addEntry(eb.startStrField("config.lightoverlay.redColor", "#" + toStringColor(LightOverlayClient.redColor))
+                    .setDefaultValue("#FF0000")
+                    .setSaveConsumer(str -> LightOverlayClient.redColor = toIntColor(str))
+                    .setErrorSupplier(s -> {
+                        if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
+                            return Optional.of(I18n.format("config.lightoverlay.invalidColor"));
+                        else return Optional.empty();
+                    })
+                    .build()
+            );
+            general.addEntry(eb.startStrField("config.lightoverlay.secondaryColor", "#" + toStringColor(LightOverlayClient.secondaryColor))
+                    .setDefaultValue("#0000FF")
+                    .setSaveConsumer(str -> LightOverlayClient.secondaryColor = toIntColor(str))
+                    .setErrorSupplier(s -> {
+                        if (!s.startsWith("#") || s.length() != 7 || !isInt(s.substring(1)))
+                            return Optional.of(I18n.format("config.lightoverlay.invalidColor"));
+                        else return Optional.empty();
+                    })
+                    .build()
+            );
             
             return builder.setSavingRunnable(() -> {
                 try {
@@ -45,5 +73,35 @@ public class LightOverlayCloth {
                 LightOverlayClient.loadConfig(LightOverlayClient.configFile);
             }).build();
         });
+    }
+    
+    private static boolean isInt(String s) {
+        try {
+            Integer.parseInt(s, 16);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
+    private static int toIntColor(String str) {
+        String substring = str.substring(1);
+        int r = Integer.parseInt(substring.substring(0, 2), 16);
+        int g = Integer.parseInt(substring.substring(2, 4), 16);
+        int b = Integer.parseInt(substring.substring(4, 6), 16);
+        return (r << 16) + (g << 8) + b;
+    }
+    
+    private static String toStringColor(int toolColor) {
+        String r = Integer.toHexString((toolColor >> 16) & 0xFF);
+        String g = Integer.toHexString((toolColor >> 8) & 0xFF);
+        String b = Integer.toHexString((toolColor >> 0) & 0xFF);
+        if (r.length() == 1)
+            r = "0" + r;
+        if (g.length() == 1)
+            g = "0" + g;
+        if (b.length() == 1)
+            b = "0" + b;
+        return (r + g + b).toUpperCase(Locale.ROOT);
     }
 }

@@ -1,13 +1,13 @@
 package me.shedaniel.lightoverlay.fabric.mixin;
 
 import me.shedaniel.lightoverlay.fabric.LightOverlay;
+import net.minecraft.client.network.packet.BlockUpdateS2CPacket;
+import net.minecraft.client.network.packet.ChunkDataS2CPacket;
+import net.minecraft.client.network.packet.ChunkDeltaUpdateS2CPacket;
+import net.minecraft.client.network.packet.LightUpdateS2CPacket;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.listener.PacketListener;
-import net.minecraft.network.packet.s2c.play.BlockUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
-import net.minecraft.network.packet.s2c.play.ChunkDeltaUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.LightUpdateS2CPacket;
 import net.minecraft.util.math.ChunkPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
