@@ -8,11 +8,10 @@ import net.minecraftforge.fml.common.Mod;
 @Mod("lightoverlay-forge")
 public class LightOverlay {
     public LightOverlay() {
-        //noinspection Convert2MethodRef
-        DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> LightOverlayClient.register());
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> LightOverlayClient::register);
     }
     
     public static void processPacket(IPacket<?> packet) {
-        DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> LightOverlayClient.processPacket(packet));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> LightOverlayClient.processPacket(packet));
     }
 }

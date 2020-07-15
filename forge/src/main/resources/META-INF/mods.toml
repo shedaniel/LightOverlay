@@ -12,8 +12,8 @@ To provide users with NEI-like light overlay.
 '''
 
 [[dependencies.lightoverlay-forge]]
-    modId="cloth-config2"
+    modId="cloth-config"
     mandatory=true
-    versionRange="[3.0,)"
+    versionRange="[4.0,)"
     ordering="NONE"
     side="CLIENT"

@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.shedaniel.cloth.hooks.ClothClientHooks;
+import me.shedaniel.cloth.api.client.events.v0.ClothClientHooks;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.event.client.ClientTickCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -81,7 +81,7 @@ public class LightOverlay implements ClientModInitializer {
     private static long ticks = 0;
     
     static {
-        ClientTickCallback.EVENT.register(client -> {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
             try {
                 ticks++;
                 if (CLIENT.player == null || !enabled) {
@@ -93,7 +93,7 @@ public class LightOverlay implements ClientModInitializer {
                         CHUNK_MAP.clear();
                         ClientPlayerEntity player = CLIENT.player;
                         ClientWorld world = CLIENT.world;
-                        BlockPos playerPos = player.getBlockPos();
+                        BlockPos playerPos = player.getSenseCenterPos();
                         EntityContext entityContext = EntityContext.of(player);
                         ChunkLightingView block = world.getLightingProvider().get(LightType.BLOCK);
                         ChunkLightingView sky = showNumber ? null : world.getLightingProvider().get(LightType.SKY);
@@ -222,7 +222,7 @@ public class LightOverlay implements ClientModInitializer {
         // Check if the collision has a bump
         if (upperCollisionShape.getMaximum(Direction.Axis.Y) > 0)
             return CrossType.NONE;
-        if (blockUpperState.getBlock().matches(BlockTags.RAILS))
+        if (blockUpperState.getBlock().isIn(BlockTags.RAILS))
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.allowsSpawning(world, down, testingEntityType))
@@ -415,7 +415,7 @@ public class LightOverlay implements ClientModInitializer {
         
         // Setup
         testingEntityType = EntityType.Builder.create(EntityCategory.MONSTER).setDimensions(0f, 0f).disableSaving().build(null);
-        ClientTickCallback.EVENT.register(minecraftClient -> {
+        ClientTickEvents.END_CLIENT_TICK.register(minecraftClient -> {
             while (ENABLE_OVERLAY.wasPressed())
                 enabled = !enabled;
         });

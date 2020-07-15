@@ -12,7 +12,6 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.TransformationMatrix;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.client.world.ClientWorld;
@@ -30,9 +29,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -238,7 +238,7 @@ public class LightOverlayClient {
                         CHUNK_MAP.clear();
                         ClientPlayerEntity player = minecraft.player;
                         ClientWorld world = minecraft.world;
-                        BlockPos playerPos = player.getPosition();
+                        BlockPos playerPos = player.func_233580_cy_();
                         ISelectionContext entityContext = ISelectionContext.forEntity(player);
                         IWorldLightListener block = world.getLightManager().getLightEngine(LightType.BLOCK);
                         IWorldLightListener sky = showNumber ? null : world.getLightManager().getLightEngine(LightType.SKY);
@@ -265,7 +265,7 @@ public class LightOverlayClient {
                         ClientPlayerEntity player = minecraft.player;
                         ClientWorld world = minecraft.world;
                         ISelectionContext selectionContext = ISelectionContext.forEntity(player);
-                        Vec3d[] playerPos = {null};
+                        Vector3d[] playerPos = {null};
                         int playerPosX = ((int) player.getPosX()) >> 4;
                         int playerPosZ = ((int) player.getPosZ()) >> 4;
                         if (ticks % 20 == 0) {
@@ -343,7 +343,7 @@ public class LightOverlayClient {
             int playerPosZ = ((int) playerEntity.getPosZ()) >> 4;
             ISelectionContext selectionContext = ISelectionContext.forEntity(playerEntity);
             World world = client.world;
-            BlockPos playerPos = playerEntity.getPosition();
+            BlockPos playerPos = playerEntity.func_233580_cy_();
             ActiveRenderInfo info = client.gameRenderer.getActiveRenderInfo();
             if (showNumber) {
                 RenderSystem.enableTexture();

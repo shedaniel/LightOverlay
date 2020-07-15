@@ -9,10 +9,6 @@ buildscript {
     }
 }
 
-plugins {
-    id("com.wynprice.cursemaven") version("2.1.1")
-}
-
 apply plugin: "net.minecraftforge.gradle"
 apply plugin: "eclipse"
 
@@ -40,9 +36,10 @@ minecraft {
 
 repositories {
     maven { url "https://files.minecraftforge.net/maven" }
+    maven { url "https://dl.bintray.com/shedaniel/cloth-config-2" }
 }
 
 dependencies {
-    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-31.1.39")
-    implementation(fg.deobf("curse.maven:cloth-config-forge:${rootProject.cloth_config_forge_commit}"))
+    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-${project.forge_version}")
+    implementation(fg.deobf("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_forge}"))
 }
