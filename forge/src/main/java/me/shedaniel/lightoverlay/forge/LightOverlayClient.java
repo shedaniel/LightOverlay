@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
+import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -88,7 +90,7 @@ public class LightOverlayClient {
         return thread;
     });
     private static final List<ChunkPos> POS = Lists.newCopyOnWriteArrayList();
-    private static final Map<ChunkPos, Map<Long, Object>> CHUNK_MAP = Maps.newConcurrentMap();
+    private static final Map<ChunkPos, Long2ReferenceMap<Object>> CHUNK_MAP = Maps.newConcurrentMap();
     private static long ticks = 0;
     
     static {
@@ -104,8 +106,7 @@ public class LightOverlayClient {
         MinecraftForge.EVENT_BUS.register(LightOverlayClient.class);
         
         try {
-            //noinspection Convert2MethodRef
-            DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> LightOverlayCloth.register());
+            DistExecutor.runWhenOn(Dist.CLIENT, () -> LightOverlayCloth::register);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -245,14 +246,14 @@ public class LightOverlayClient {
                         BlockPos.Mutable downPos = new BlockPos.Mutable();
                         Iterable<BlockPos> iterate = BlockPos.getAllInBoxMutable(playerPos.getX() - reach, playerPos.getY() - reach, playerPos.getZ() - reach,
                                 playerPos.getX() + reach, playerPos.getY() + reach, playerPos.getZ() + reach);
-                        HashMap<Long, Object> map = Maps.newHashMap();
+                        Long2ReferenceMap<Object> map = new Long2ReferenceOpenHashMap<>();
                         CHUNK_MAP.put(new ChunkPos(0, 0), map);
                         for (BlockPos blockPos : iterate) {
                             downPos.setPos(blockPos.getX(), blockPos.getY() - 1, blockPos.getZ());
                             if (showNumber) {
                                 int level = getCrossLevel(blockPos, downPos, world, block, entityContext);
                                 if (level >= 0) {
-                                    map.put(blockPos.toLong(), level);
+                                    map.put(blockPos.toLong(), Integer.valueOf(level));
                                 }
                             } else {
                                 CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
@@ -277,28 +278,29 @@ public class LightOverlayClient {
                                 }
                             }
                         }
-                        if (!POS.isEmpty()) {
-                            if (playerPos[0] == null) {
-                                playerPos[0] = player.getPositionVec();
-                            }
-                            ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> value.getBlock(8, 0, 8).distanceSq(playerPos[0].x, 0, playerPos[0].z, false))).get();
-                            EXECUTOR.submit(() -> {
-                                if (MathHelper.abs(pos.x - playerPosX) <= getChunkRange() && MathHelper.abs(pos.z - playerPosZ) <= getChunkRange()) {
-                                    calculateChunk(world.getChunkProvider().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, selectionContext);
-                                } else {
-                                    CHUNK_MAP.remove(pos);
+                        POS.removeIf(pos -> MathHelper.abs(pos.x - playerPosX) > getChunkRange() || MathHelper.abs(pos.z - playerPosZ) > getChunkRange());
+                        for (int k = 0; k < 2; k++) {
+                            if (!POS.isEmpty()) {
+                                if (playerPos[0] == null) {
+                                    playerPos[0] = player.getPositionVec();
                                 }
-                            });
-                            POS.remove(pos);
+                                ChunkPos pos = POS.stream().min(Comparator.comparingDouble(value -> {
+                                    int i = Math.abs(value.x - playerPosX);
+                                    int j = Math.abs(value.z - playerPosZ);
+                                    return i * i + j * j;
+                                })).get();
+                                POS.remove(pos);
+                                EXECUTOR.submit(() -> {
+                                    try {
+                                        calculateChunk(world.getChunkProvider().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), world, pos, selectionContext);
+                                    } catch (Throwable throwable) {
+                                        LogManager.getLogger().throwing(throwable);
+                                    }
+                                });
+                            }
                         }
                         if (ticks % 50 == 0) {
-                            Iterator<Map.Entry<ChunkPos, Map<Long, Object>>> chunkMapIterator = CHUNK_MAP.entrySet().iterator();
-                            while (chunkMapIterator.hasNext()) {
-                                Map.Entry<ChunkPos, Map<Long, Object>> pos = chunkMapIterator.next();
-                                if (MathHelper.abs(pos.getKey().x - playerPosX) > getChunkRange() * 2 || MathHelper.abs(pos.getKey().z - playerPosZ) > getChunkRange() * 2) {
-                                    chunkMapIterator.remove();
-                                }
-                            }
+                            CHUNK_MAP.entrySet().removeIf(pos -> MathHelper.abs(pos.getKey().x - playerPosX) > getChunkRange() * 2 || MathHelper.abs(pos.getKey().z - playerPosZ) > getChunkRange() * 2);
                         }
                     }
                 }
@@ -309,8 +311,8 @@ public class LightOverlayClient {
     }
     
     private static void calculateChunk(Chunk chunk, World world, ChunkPos chunkPos, ISelectionContext selectionContext) {
-        Map<Long, Object> map = Maps.newHashMap();
         if (chunk != null) {
+            Long2ReferenceMap<Object> map = new Long2ReferenceOpenHashMap<>();
             IWorldLightListener block = chunk.getWorldLightManager().getLightEngine(LightType.BLOCK);
             IWorldLightListener sky = showNumber ? null : chunk.getWorldLightManager().getLightEngine(LightType.SKY);
             for (BlockPos pos : BlockPos.getAllInBoxMutable(chunkPos.getXStart(), 0, chunkPos.getZStart(), chunkPos.getXEnd(), 256, chunkPos.getZEnd())) {
@@ -318,7 +320,7 @@ public class LightOverlayClient {
                 if (showNumber) {
                     int level = LightOverlayClient.getCrossLevel(pos, down, chunk, block, selectionContext);
                     if (level >= 0) {
-                        map.put(pos.toLong(), level);
+                        map.put(pos.toLong(), Integer.valueOf(level));
                     }
                 } else {
                     Biome biome = world.getBiomeManager().getBiome(pos);
@@ -330,8 +332,10 @@ public class LightOverlayClient {
                     }
                 }
             }
+            CHUNK_MAP.put(chunkPos, map);
+        } else {
+            CHUNK_MAP.remove(chunkPos);
         }
-        CHUNK_MAP.put(chunkPos, map);
     }
     
     public static void renderWorldLast() {
@@ -349,13 +353,13 @@ public class LightOverlayClient {
                 RenderSystem.enableTexture();
                 RenderSystem.depthMask(true);
                 BlockPos.Mutable mutable = new BlockPos.Mutable();
-                for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
+                for (Map.Entry<ChunkPos, Long2ReferenceMap<Object>> entry : CHUNK_MAP.entrySet()) {
                     if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                         continue;
                     }
-                    for (Map.Entry<Long, Object> objectEntry : entry.getValue().entrySet()) {
+                    for (Long2ReferenceMap.Entry<Object> objectEntry : entry.getValue().long2ReferenceEntrySet()) {
                         if (objectEntry.getValue() instanceof Integer) {
-                            mutable.setPos(BlockPos.unpackX(objectEntry.getKey()), BlockPos.unpackY(objectEntry.getKey()), BlockPos.unpackZ(objectEntry.getKey()));
+                            mutable.setPos(BlockPos.unpackX(objectEntry.getLongKey()), BlockPos.unpackY(objectEntry.getLongKey()), BlockPos.unpackZ(objectEntry.getLongKey()));
                             if (mutable.withinDistance(playerPos, reach)) {
                                 BlockPos down = mutable.down();
                                 LightOverlayClient.renderLevel(client, info, world, mutable, down, (Integer) objectEntry.getValue(), selectionContext);
@@ -374,13 +378,13 @@ public class LightOverlayClient {
                 GL11.glLineWidth(lineWidth);
                 GL11.glBegin(GL11.GL_LINES);
                 BlockPos.Mutable mutable = new BlockPos.Mutable();
-                for (Map.Entry<ChunkPos, Map<Long, Object>> entry : CHUNK_MAP.entrySet()) {
+                for (Map.Entry<ChunkPos, Long2ReferenceMap<Object>> entry : CHUNK_MAP.entrySet()) {
                     if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                         continue;
                     }
-                    for (Map.Entry<Long, Object> objectEntry : entry.getValue().entrySet()) {
+                    for (Long2ReferenceMap.Entry<Object> objectEntry : entry.getValue().long2ReferenceEntrySet()) {
                         if (objectEntry.getValue() instanceof CrossType) {
-                            mutable.setPos(BlockPos.unpackX(objectEntry.getKey()), BlockPos.unpackY(objectEntry.getKey()), BlockPos.unpackZ(objectEntry.getKey()));
+                            mutable.setPos(BlockPos.unpackX(objectEntry.getLongKey()), BlockPos.unpackY(objectEntry.getLongKey()), BlockPos.unpackZ(objectEntry.getLongKey()));
                             if (mutable.withinDistance(playerPos, reach)) {
                                 BlockPos down = mutable.down();
                                 int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : secondaryColor;
