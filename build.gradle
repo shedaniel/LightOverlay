@@ -47,14 +47,14 @@ idea.project.settings {
             project = rootProject.project(":fabric")
             taskNames = Collections.singletonList("runServer")
         }
-        "Forge: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":forge")
-            taskNames = Collections.singletonList("runClient")
-        }
-        "Forge: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":forge")
-            taskNames = Collections.singletonList("runServer")
-        }
+//        "Forge: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
+//            project = rootProject.project(":forge")
+//            taskNames = Collections.singletonList("runClient")
+//        }
+//        "Forge: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
+//            project = rootProject.project(":forge")
+//            taskNames = Collections.singletonList("runServer")
+//        }
     }
 }
 
@@ -128,8 +128,9 @@ task buildMerged {
     }
 }
 
-buildMerged.mustRunAfter project(":fabric").tasks.getByName("build")
-buildMerged.mustRunAfter project(":forge").tasks.getByName("build")
+rootProject.subprojects.forEach {
+    buildMerged.mustRunAfter it.tasks.getByName("build")
+}
 
 static def compress(Path sourceDir, File zipFile) {
     try {

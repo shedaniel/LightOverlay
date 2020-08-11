@@ -23,7 +23,7 @@ public class MixinClientConnection {
         } else if (packet instanceof ChunkDataS2CPacket) {
             LightOverlay.queueChunkAndNear(new ChunkPos(((ChunkDataS2CPacket) packet).getX(), ((ChunkDataS2CPacket) packet).getZ()));
         } else if (packet instanceof ChunkDeltaUpdateS2CPacket) {
-            LightOverlay.queueChunkAndNear(new ChunkPos(((ChunkDeltaUpdateS2CPacket) packet).chunkPos.x, ((ChunkDeltaUpdateS2CPacket) packet).chunkPos.z));
+            LightOverlay.queueChunkAndNear(new ChunkPos(((ChunkDeltaUpdateS2CPacket) packet).sectionPos.getSectionX(), ((ChunkDeltaUpdateS2CPacket) packet).sectionPos.getSectionZ()));
         } else if (packet instanceof LightUpdateS2CPacket) {
             LightOverlay.queueChunk(new ChunkPos(((LightUpdateS2CPacket) packet).getChunkX(), ((LightUpdateS2CPacket) packet).getChunkZ()));
         }

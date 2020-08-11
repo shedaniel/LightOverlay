@@ -26,10 +26,10 @@ public class LOModMenuEntry implements ModMenuApi {
         
         ConfigEntryBuilder eb = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory(new TranslatableText("config.lightoverlay.general"));
-        general.addEntry(eb.startTextDescription(Text.method_30163("§7" + I18n.translate("description.lightoverlay.caching"))).build());
+        general.addEntry(eb.startTextDescription(Text.of("§7" + I18n.translate("description.lightoverlay.caching"))).build());
         general.addEntry(eb.startBooleanToggle(new TranslatableText("config.lightoverlay.caching"), LightOverlay.caching).setDefaultValue(false).setSaveConsumer(bool -> LightOverlay.caching = bool).build());
-        general.addEntry(eb.startIntSlider(new TranslatableText("config.lightoverlay.reach"), LightOverlay.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> Text.method_30163("Reach: " + integer + " Blocks")).setSaveConsumer(integer -> LightOverlay.reach = integer).build());
-        IntegerSliderEntry crossLevel = eb.startIntSlider(new TranslatableText("config.lightoverlay.crossLevel"), LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> Text.method_30163("Cross Level: " + integer)).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build();
+        general.addEntry(eb.startIntSlider(new TranslatableText("config.lightoverlay.reach"), LightOverlay.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> Text.of("Reach: " + integer + " Blocks")).setSaveConsumer(integer -> LightOverlay.reach = integer).build());
+        IntegerSliderEntry crossLevel = eb.startIntSlider(new TranslatableText("config.lightoverlay.crossLevel"), LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> Text.of("Cross Level: " + integer)).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build();
         general.addEntry(crossLevel);
         general.addEntry(eb.startIntSlider(new TranslatableText("config.lightoverlay.secondaryLevel"), LightOverlay.secondaryLevel, -1, 15)
                 .setErrorSupplier(integer -> {

@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "0.4-SNAPSHOT"
+    id("fabric-loom") version "0.5-SNAPSHOT"
 }
 
 minecraft {
@@ -27,7 +27,9 @@ dependencies {
     modCompile("me.shedaniel.cloth.api:cloth-client-events-v0:${rootProject.cloth_version}") {
         transitive = false
     }
-    modImplementation("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}")
+    modImplementation("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}") {
+        exclude(group: "net.fabricmc.fabric-api")
+    }
     modImplementation("io.github.prospector:modmenu:${rootProject.modmenu_version}") {
         transitive = false
     }
