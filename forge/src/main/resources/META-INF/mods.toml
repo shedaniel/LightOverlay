@@ -3,6 +3,7 @@ loaderVersion="[29,)"
 issueTrackerURL="https://github.com/shedaniel/LightOverlay/issues/" #optional
 logoFile="icon.png"
 authors="shedaniel"
+license="Apache-2.0"
 [[mods]]
     modId="lightoverlay-forge"
     version="${file.jarVersion}"

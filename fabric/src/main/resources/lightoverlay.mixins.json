@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [
-    "MixinClientConnection"
+    "MixinClientConnection",
+    "MixinWorldRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -13,7 +13,8 @@ function initializeCoreMod() {
             },
             'transformer': function (classNode) {
                 var render = ASMAPI.mapMethod("func_229019_a_");
-                for (i in classNode.methods) {
+                var setupTerrain = ASMAPI.mapMethod("func_228437_a_");
+                for (var i in classNode.methods) {
                     var method = classNode.methods[i];
                     if (method.name === render) {
                         var instructions = method.instructions;
@@ -28,6 +29,11 @@ function initializeCoreMod() {
                             }
                         }
                         break;
+                    } else if (method.name === setupTerrain) {
+                        var instructions = method.instructions;
+                        instructions.insertBefore(new LabelNode());
+                        instructions.insertBefore(new VarInsnNode(Opcodes.ALOAD, 2));
+                        instructions.insertBefore(new MethodInsnNode(Opcodes.INVOKESTATIC, "me/shedaniel/lightoverlay/forge/LightOverlayClient", "updateFrustum", "(Lnet/minecraft/client/renderer/culling/ClippingHelper;)V", false));
                     }
                 }
                 return classNode;

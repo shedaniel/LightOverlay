@@ -18,6 +18,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.InputUtil;
@@ -47,7 +48,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -72,6 +76,7 @@ public class LightOverlay implements ClientModInitializer {
     private static boolean enabled = false;
     private static EntityType<Entity> testingEntityType;
     private static int threadNumber = 0;
+    public static Frustum frustum;
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
         Thread thread = new Thread(r, "light-overlay-" + threadNumber++);
         thread.setDaemon(true);
@@ -437,6 +442,7 @@ public class LightOverlay implements ClientModInitializer {
                     RenderSystem.enableTexture();
                     RenderSystem.depthMask(true);
                     BlockPos.Mutable mutable = new BlockPos.Mutable();
+                    BlockPos.Mutable downMutable = new BlockPos.Mutable();
                     for (Map.Entry<ChunkPos, Long2ReferenceMap<Object>> entry : CHUNK_MAP.entrySet()) {
                         if (caching && (MathHelper.abs(entry.getKey().x - playerPosX) > getChunkRange() || MathHelper.abs(entry.getKey().z - playerPosZ) > getChunkRange())) {
                             continue;
@@ -445,8 +451,10 @@ public class LightOverlay implements ClientModInitializer {
                             if (objectEntry.getValue() instanceof Integer) {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getLongKey()), BlockPos.unpackLongY(objectEntry.getLongKey()), BlockPos.unpackLongZ(objectEntry.getLongKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
-                                    BlockPos down = mutable.down();
-                                    LightOverlay.renderLevel(CLIENT, camera, world, mutable, down, (Integer) objectEntry.getValue(), entityContext);
+                                    if (frustum == null || FrustumHelper.isVisible(frustum, mutable.getX(), mutable.getY(), mutable.getZ(), mutable.getX() + 1, mutable.getX() + 1, mutable.getX() + 1)) {
+                                        downMutable.set(mutable.getX(), mutable.getY() - 1, mutable.getZ());
+                                        LightOverlay.renderLevel(CLIENT, camera, world, mutable, downMutable, (Integer) objectEntry.getValue(), entityContext);
+                                    }
                                 }
                             }
                         }
@@ -469,8 +477,10 @@ public class LightOverlay implements ClientModInitializer {
                             if (objectEntry.getValue() instanceof CrossType) {
                                 mutable.set(BlockPos.unpackLongX(objectEntry.getLongKey()), BlockPos.unpackLongY(objectEntry.getLongKey()), BlockPos.unpackLongZ(objectEntry.getLongKey()));
                                 if (mutable.isWithinDistance(playerPos, reach)) {
-                                    int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : secondaryColor;
-                                    LightOverlay.renderCross(camera, world, mutable, color, entityContext);
+                                    if (frustum == null || FrustumHelper.isVisible(frustum, mutable.getX(), mutable.getY(), mutable.getZ(), mutable.getX() + 1, mutable.getX() + 1, mutable.getX() + 1)) {
+                                        int color = objectEntry.getValue() == CrossType.RED ? redColor : objectEntry.getValue() == CrossType.YELLOW ? yellowColor : secondaryColor;
+                                        LightOverlay.renderCross(camera, world, mutable, color, entityContext);
+                                    }
                                 }
                             }
                         }

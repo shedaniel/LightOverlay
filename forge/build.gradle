@@ -14,6 +14,7 @@ apply plugin: "eclipse"
 
 minecraft {
     mappings(channel: "snapshot", version: rootProject.mcp_snapshot)
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
             workingDirectory project.file("run")

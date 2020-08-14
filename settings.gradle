@@ -12,4 +12,4 @@ pluginManagement {
 rootProject.name="light-overlay"
 
 include("fabric")
-//include("forge")
+include("forge")
