@@ -256,9 +256,12 @@ public class LightOverlayClient {
                                     map.put(blockPos.toLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                if (type != CrossType.NONE) {
-                                    map.put(blockPos.toLong(), type);
+                                Biome biome = world.getBiomeManager().getBiome(blockPos);
+                                if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
+                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                    if (type != CrossType.NONE) {
+                                        map.put(blockPos.toLong(), type);
+                                    }
                                 }
                             }
                         }

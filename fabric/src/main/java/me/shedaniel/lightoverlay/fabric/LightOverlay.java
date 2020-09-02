@@ -115,9 +115,12 @@ public class LightOverlay implements ClientModInitializer {
                                     map.put(blockPos.asLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                if (type != CrossType.NONE) {
-                                    map.put(blockPos.asLong(), type);
+                                Biome biome = world.getBiomeAccess().getBiome(blockPos);
+                                if (biome.getMaxSpawnLimit() > 0 && !biome.getEntitySpawnList(EntityCategory.MONSTER).isEmpty()) {
+                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                    if (type != CrossType.NONE) {
+                                        map.put(blockPos.asLong(), type);
+                                    }
                                 }
                             }
                         }
