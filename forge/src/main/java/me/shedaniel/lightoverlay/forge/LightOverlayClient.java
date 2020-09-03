@@ -39,7 +39,6 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.MobSpawnInfo;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.lighting.IWorldLightListener;
@@ -261,12 +260,9 @@ public class LightOverlayClient {
                                     map.put(blockPos.toLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                MobSpawnInfo spawnInfo = world.getBiomeManager().getBiome(blockPos).func_242433_b();
-                                if (spawnInfo.func_242557_a() > 0 && !spawnInfo.func_242559_a(EntityClassification.MONSTER).isEmpty()) {
-                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                    if (type != CrossType.NONE) {
-                                        map.put(blockPos.toLong(), type);
-                                    }
+                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                if (type != CrossType.NONE) {
+                                    map.put(blockPos.toLong(), type);
                                 }
                             }
                         }
@@ -335,12 +331,9 @@ public class LightOverlayClient {
                         map.put(pos.toLong(), Integer.valueOf(level));
                     }
                 } else {
-                    MobSpawnInfo spawnInfo = world.getBiomeManager().getBiome(pos).func_242433_b();
-                    if (spawnInfo.func_242557_a() > 0 && !spawnInfo.func_242559_a(EntityClassification.MONSTER).isEmpty()) {
-                        CrossType type = LightOverlayClient.getCrossType(pos, down, chunk, block, sky, selectionContext);
-                        if (type != CrossType.NONE) {
-                            map.put(pos.toLong(), type);
-                        }
+                    CrossType type = LightOverlayClient.getCrossType(pos, down, chunk, block, sky, selectionContext);
+                    if (type != CrossType.NONE) {
+                        map.put(pos.toLong(), type);
                     }
                 }
             }

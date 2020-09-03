@@ -36,7 +36,6 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.chunk.light.ChunkLightingView;
@@ -117,12 +116,9 @@ public class LightOverlay implements ClientModInitializer {
                                     map.put(blockPos.asLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                SpawnSettings spawnSettings = world.getBiomeAccess().getBiome(blockPos).getSpawnSettings();
-                                if (spawnSettings.getCreatureSpawnProbability() > 0 && !spawnSettings.getSpawnEntry(EntityCategory.MONSTER).isEmpty()) {
-                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                    if (type != CrossType.NONE) {
-                                        map.put(blockPos.asLong(), type);
-                                    }
+                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                if (type != CrossType.NONE) {
+                                    map.put(blockPos.asLong(), type);
                                 }
                             }
                         }
@@ -205,12 +201,9 @@ public class LightOverlay implements ClientModInitializer {
                         map.put(pos.asLong(), Integer.valueOf(level));
                     }
                 } else {
-                    SpawnSettings spawnSettings = world.getBiomeAccess().getBiome(pos).getSpawnSettings();
-                    if (spawnSettings.getCreatureSpawnProbability() > 0 && !spawnSettings.getSpawnEntry(EntityCategory.MONSTER).isEmpty()) {
-                        CrossType type = LightOverlay.getCrossType(pos, down, chunk, block, sky, entityContext);
-                        if (type != CrossType.NONE) {
-                            map.put(pos.asLong(), type);
-                        }
+                    CrossType type = LightOverlay.getCrossType(pos, down, chunk, block, sky, entityContext);
+                    if (type != CrossType.NONE) {
+                        map.put(pos.asLong(), type);
                     }
                 }
             }
