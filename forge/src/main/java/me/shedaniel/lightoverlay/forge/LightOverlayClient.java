@@ -60,7 +60,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -256,9 +259,12 @@ public class LightOverlayClient {
                                     map.put(blockPos.toLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                if (type != CrossType.NONE) {
-                                    map.put(blockPos.toLong(), type);
+                                Biome biome = world.getBiomeManager().getBiome(blockPos);
+                                if (biome.getSpawningChance() > 0 && !biome.getSpawns(EntityClassification.MONSTER).isEmpty()) {
+                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                    if (type != CrossType.NONE) {
+                                        map.put(blockPos.toLong(), type);
+                                    }
                                 }
                             }
                         }
