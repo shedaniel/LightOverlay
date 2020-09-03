@@ -261,9 +261,12 @@ public class LightOverlayClient {
                                     map.put(blockPos.toLong(), Integer.valueOf(level));
                                 }
                             } else {
-                                CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
-                                if (type != CrossType.NONE) {
-                                    map.put(blockPos.toLong(), type);
+                                MobSpawnInfo spawnInfo = world.getBiomeManager().getBiome(blockPos).func_242433_b();
+                                if (spawnInfo.func_242557_a() > 0 && !spawnInfo.func_242559_a(EntityClassification.MONSTER).isEmpty()) {
+                                    CrossType type = getCrossType(blockPos, downPos, world, block, sky, entityContext);
+                                    if (type != CrossType.NONE) {
+                                        map.put(blockPos.toLong(), type);
+                                    }
                                 }
                             }
                         }
