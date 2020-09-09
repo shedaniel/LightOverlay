@@ -6,7 +6,7 @@
   "version": "${version}",
   "environment": "client",
   "authors": [
-    "Danielshe"
+    "shedaniel"
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/light-overlay",
@@ -23,10 +23,6 @@
   },
   "license": "Apache-2.0",
   "icon": "icon.png",
-  "requires": {
-    "fabricloader": ">=0.4.0",
-    "cloth": "*"
-  },
   "mixins": [
     "lightoverlay.mixins.json"
   ],
