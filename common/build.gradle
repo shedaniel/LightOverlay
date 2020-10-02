@@ -8,19 +8,6 @@ dependencies {
     modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 }
 
-configurations {
-    mcp
+architect {
+    common()
 }
-
-remapMcp {
-    input.set(file("${project.buildDir}/libs/$archivesBaseName-${project.version}-dev.jar"))
-    classifier("mcp")
-}
-
-remapJar.dependsOn(jar)
-
-artifacts {
-    mcp file: file("${project.buildDir}/libs/$archivesBaseName-${version}-mcp.jar"), type: "jar", builtBy: remapMcp
-}
-
-build.dependsOn(remapMcp)
