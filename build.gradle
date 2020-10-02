@@ -20,17 +20,21 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 plugins {
+    id "me.shedaniel.plugin.architect"
     id "org.jetbrains.gradle.plugin.idea-ext" version "0.7"
+}
+
+architect {
+    minecraft = minecraft_version
 }
 
 allprojects {
     apply plugin: "java"
+    apply plugin: "me.shedaniel.plugin.architect"
 
     group "me.shedaniel"
     archivesBaseName = rootProject.name
     version = rootProject.mod_version
-
-    sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 idea.project.settings {

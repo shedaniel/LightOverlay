@@ -12,6 +12,7 @@
 */out
 /run
 /classes
+logs/
 
 # IDE nonsense that could go in source control but really shouldn't
 .classpath

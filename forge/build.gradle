@@ -9,11 +9,15 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "eclipse"
+}
+
 apply plugin: "net.minecraftforge.gradle"
-apply plugin: "eclipse"
 
 minecraft {
-    mappings(channel: "snapshot", version: rootProject.mcp_snapshot)
+    mappings(channel: "official", version: rootProject.architect.minecraft)
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
@@ -36,11 +40,35 @@ minecraft {
 }
 
 repositories {
+    jcenter()
     maven { url "https://files.minecraftforge.net/maven" }
     maven { url "https://dl.bintray.com/shedaniel/cloth-config-2" }
 }
 
+configurations {
+    shadow
+}
+
 dependencies {
-    minecraft("net.minecraftforge:forge:${rootProject.forge_minecraft_version}-${project.forge_version}")
+    minecraft("net.minecraftforge:forge:${rootProject.architect.minecraft}-${project.forge_version}")
     implementation(fg.deobf("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_forge}"))
+
+    compile(project(path: ":common", configuration: "mcp")) {
+        transitive = false
+    }
+    shadow(project(path: ":common", configuration: "mcp")) {
+        transitive = false
+    }
+}
+
+shadowJar {
+    relocate "me.shedaniel.lightoverlay.common", "me.shedaniel.lightoverlay.common.forge"
+    exclude "fabric.mod.json"
+
+    configurations = [project.configurations.shadow]
+    classifier null
+}
+
+reobf {
+    shadowJar {}
 }

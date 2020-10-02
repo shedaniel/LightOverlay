@@ -1,18 +1,18 @@
 package me.shedaniel.lightoverlay.fabric.mixin;
 
-import me.shedaniel.lightoverlay.fabric.LightOverlay;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.WorldRenderer;
+import me.shedaniel.lightoverlay.common.LightOverlayCore;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.culling.Frustum;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public class MixinWorldRenderer {
-    @Inject(method = "setupTerrain", at = @At("HEAD"))
-    private void setupTerrain(Camera camera, Frustum frustum, boolean hasForcedFrustum, int frame, boolean spectator, CallbackInfo ci) {
-        LightOverlay.frustum = frustum;
+    @Inject(method = "setupRender", at = @At("HEAD"))
+    private void setupTerrain(Camera camera, Frustum frustum, boolean bl, int i, boolean bl2, CallbackInfo ci) {
+        LightOverlayCore.frustum = frustum;
     }
 }

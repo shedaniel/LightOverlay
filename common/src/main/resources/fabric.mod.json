@@ -1,0 +1,7 @@
+{
+  "_comment": "This file is here to make fabric load this on Knot classloader.",
+  "schemaVersion": 1,
+  "id": "lightoverlay-core",
+  "name": "Light Overlay Core",
+  "version": "0.0.1"
+}

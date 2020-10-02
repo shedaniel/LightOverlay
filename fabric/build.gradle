@@ -1,5 +1,6 @@
 plugins {
-    id("fabric-loom") version "0.4-SNAPSHOT"
+    id "fabric-loom"
+    id "com.github.johnrengelman.shadow" version "5.0.0"
 }
 
 minecraft {
@@ -13,14 +14,13 @@ processResources {
     inputs.property "version", project.version
 }
 
-repositories {
-    jcenter()
-    maven { url "https://dl.bintray.com/shedaniel/legacy-yarn-updated" }
+configurations {
+    shadow
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.fabric_minecraft_version}"
-    mappings "me.shedaniel:legacy-yarn:${rootProject.yarn_build}:v2"
+    minecraft "com.mojang:minecraft:${rootProject.architect.minecraft}"
+    mappings minecraft.officialMojangMappings()
     modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modCompile "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
@@ -39,4 +39,23 @@ dependencies {
     include("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}") {
         transitive = false
     }
+
+    compile(project(":common")) {
+        transitive = false
+    }
+    shadow(project(":common")) {
+        transitive = false
+    }
+}
+
+shadowJar {
+    relocate "me.shedaniel.lightoverlay.common", "me.shedaniel.lightoverlay.common.fabric"
+
+    configurations = [project.configurations.shadow]
+    classifier "shadow"
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    input.set(shadowJar.archivePath)
 }
