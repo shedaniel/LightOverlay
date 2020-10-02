@@ -51,6 +51,7 @@ open class RemapMCPTask : Jar() {
         manifestFile.writeText("""
 Manifest-Version: 1.0
 FMLModType: LIBRARY
+
         """.trimIndent())
 
         val remapper = remapperBuilder.build()
