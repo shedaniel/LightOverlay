@@ -13,6 +13,7 @@ import net.fabricmc.tinyremapper.TinyRemapper
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.URL
@@ -37,9 +38,17 @@ open class RemapMCPTask : Jar() {
         }
 
         val remapperBuilder: TinyRemapper.Builder = TinyRemapper.newRemapper()
+
+        val classpathFiles: Set<File> = LinkedHashSet(
+                project.configurations.getByName("compileClasspath").files
+        )
+        val classpath = classpathFiles.asSequence().map { obj: File -> obj.toPath() }.filter { p: Path -> input != p && Files.exists(p) }.toList().toTypedArray()
+
         val mappings = getMappings()
         val mojmapToMcpClass = createMojmapToMcpClass(mappings)
-        remapperBuilder.withMappings(remapToMcp(TinyRemapperMappingsHelper.create(mappings, fromM, toM, false), mojmapToMcpClass))
+        remapperBuilder.withMappings(remapToMcp(TinyRemapperMappingsHelper.create(mappings, fromM, fromM, false), mojmapToMcpClass))
+        remapperBuilder.ignoreFieldDesc(true)
+        remapperBuilder.skipLocalVariableMapping(true)
 
         project.logger.lifecycle(":remapping " + input.fileName)
 
@@ -60,6 +69,7 @@ FMLModType: LIBRARY
             OutputConsumerPath.Builder(output).build().use { outputConsumer ->
                 outputConsumer.addNonClassFiles(input, NonClassCopyMode.SKIP_META_INF, null)
                 outputConsumer.addNonClassFiles(architectFolder.toPath(), NonClassCopyMode.UNCHANGED, null)
+                remapper.readClassPath(*classpath)
                 remapper.readInputs(input)
                 remapper.apply(outputConsumer)
             }
@@ -77,29 +87,25 @@ FMLModType: LIBRARY
     }
 
     private fun remapToMcp(parent: IMappingProvider, mojmapToMcpClass: Map<String, String>): IMappingProvider = IMappingProvider {
-        it.acceptClass("net/fabricmc/api/Environment","net/minecraftforge/api/distmarker/OnlyIn") 
-        it.acceptClass("net/fabricmc/api/EnvType","net/minecraftforge/api/distmarker/Dist") 
-        it.acceptField(IMappingProvider.Member("net/fabricmc/api/EnvType", "SERVER", "Lnet/fabricmc/api/EnvType;"),"DEDICATED_SERVER") 
-        
+        it.acceptClass("net/fabricmc/api/Environment", "net/minecraftforge/api/distmarker/OnlyIn")
+        it.acceptClass("net/fabricmc/api/EnvType", "net/minecraftforge/api/distmarker/Dist")
+        it.acceptField(IMappingProvider.Member("net/fabricmc/api/EnvType", "SERVER", "Lnet/fabricmc/api/EnvType;"), "DEDICATED_SERVER")
+
         parent.load(object : IMappingProvider.MappingAcceptor {
             override fun acceptClass(srcName: String?, dstName: String?) {
                 it.acceptClass(srcName, mojmapToMcpClass[srcName] ?: srcName)
             }
 
             override fun acceptMethod(method: IMappingProvider.Member?, dstName: String?) {
-                it.acceptMethod(method, dstName)
             }
 
             override fun acceptMethodArg(method: IMappingProvider.Member?, lvIndex: Int, dstName: String?) {
-                it.acceptMethodArg(method, lvIndex, dstName)
             }
 
             override fun acceptMethodVar(method: IMappingProvider.Member?, lvIndex: Int, startOpIdx: Int, asmIndex: Int, dstName: String?) {
-                it.acceptMethodVar(method, lvIndex, startOpIdx, asmIndex, dstName)
             }
 
             override fun acceptField(field: IMappingProvider.Member?, dstName: String?) {
-                it.acceptField(field, dstName)
             }
         })
     }
