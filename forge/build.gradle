@@ -53,7 +53,7 @@ dependencies {
     minecraft("net.minecraftforge:forge:${rootProject.architect.minecraft}-${project.forge_version}")
     implementation(fg.deobf("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_forge}"))
 
-    compile(project(path: ":common", configuration: "mcp")) {
+    compile(project(path: ":common", configuration: "mcpGenerateMod")) {
         transitive = false
     }
     shadow(project(path: ":common", configuration: "mcp")) {
