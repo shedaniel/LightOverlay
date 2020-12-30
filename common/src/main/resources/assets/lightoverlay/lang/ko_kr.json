@@ -1,0 +1,18 @@
+{
+  "key.lightoverlay.category": "Light Overlay",
+  "key.lightoverlay.enable_overlay": "광도 오버레이 켜기/끄기",
+  "description.lightoverlay.caching": "캐시는 표시 범위가 16 이상이거나 컴퓨터 성능이 좋지 않을 때 권장됩니다.",
+  "config.lightoverlay.general": "일반",
+  "config.lightoverlay.reach": "표시 범위:",
+  "config.lightoverlay.caching": "캐시:",
+  "config.lightoverlay.crossLevel": "광도:",
+  "config.lightoverlay.secondaryLevel": "2차 광도 (하늘에 노출되지 않은 공간에서 표시됨):",
+  "config.lightoverlay.showNumber": "선 대신 숫자 표시:",
+  "config.lightoverlay.smoothLines": "부드러운 선:",
+  "config.lightoverlay.underwater": "물 속에서도 표시:",
+  "config.lightoverlay.lineWidth": "선 폭:",
+  "config.lightoverlay.yellowColor": "노란색:",
+  "config.lightoverlay.secondaryColor": "2차 광도 표시 색:",
+  "config.lightoverlay.redColor": "빨간색:",
+  "config.lightoverlay.invalidColor": "불가능한 색"
+}
