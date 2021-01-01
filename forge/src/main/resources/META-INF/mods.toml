@@ -1,20 +1,27 @@
-modLoader="javafml"
-loaderVersion="[33,)"
-issueTrackerURL="https://github.com/shedaniel/LightOverlay/issues/" #optional
-logoFile="icon.png"
-authors="shedaniel"
-license="Apache-2.0"
+modLoader = "javafml"
+loaderVersion = "[33,)"
+issueTrackerURL = "https://github.com/shedaniel/LightOverlay/issues/" #optional
+logoFile = "icon.png"
+authors = "shedaniel"
+license = "Apache-2.0"
 [[mods]]
-    modId="lightoverlay-forge"
-    version="${file.jarVersion}"
-    displayName="Light Overlay Forge"
-    description='''
+modId = "lightoverlay"
+version = "${version}"
+displayName = "Light Overlay"
+description = '''
 To provide users with NEI-like light overlay.
 '''
 
-[[dependencies.lightoverlay-forge]]
-    modId="cloth-config"
-    mandatory=true
-    versionRange="[4.0,)"
-    ordering="NONE"
-    side="CLIENT"
+[[dependencies.lightoverlay]]
+modId = "cloth-config"
+mandatory = true
+versionRange = "[4.1.3,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.lightoverlay]]
+modId = "architectury"
+mandatory = true
+versionRange = "[1.2.67,)"
+ordering = "NONE"
+side = "CLIENT"

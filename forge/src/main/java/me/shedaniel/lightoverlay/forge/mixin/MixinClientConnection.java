@@ -1,4 +1,4 @@
-package me.shedaniel.lightoverlay.fabric.mixin;
+package me.shedaniel.lightoverlay.forge.mixin;
 
 import me.shedaniel.lightoverlay.common.LightOverlay;
 import net.minecraft.network.Connection;

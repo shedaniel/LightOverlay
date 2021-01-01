@@ -15,7 +15,7 @@
   },
   "entrypoints": {
     "client": [
-      "me.shedaniel.lightoverlay.fabric.LightOverlay"
+      "me.shedaniel.lightoverlay.fabric.LightOverlayImpl::init"
     ],
     "modmenu": [
       "me.shedaniel.lightoverlay.fabric.LOModMenuEntry"
@@ -29,5 +29,9 @@
   "accessWidener": "lightoverlay.accesswidener",
   "custom": {
     "modmenu:clientsideOnly": true
+  },
+  "depends": {
+    "fabric-api": ">=0.29.1",
+    "architectury": ">=1.2.67"
   }
 }

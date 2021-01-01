@@ -7,8 +7,6 @@ buildscript {
     }
 }
 
-import org.jetbrains.gradle.ext.ActionDelegationConfig
-
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,54 +18,44 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 plugins {
-    id "architect-plugin" version "1.0.10"
-    id "org.jetbrains.gradle.plugin.idea-ext" version "0.7"
+    id "architectury-plugin" version "1.3.39"
+    id "forgified-fabric-loom" version "0.5.16" apply false
 }
 
 architect {
     minecraft = minecraft_version
 }
 
+subprojects {
+    apply plugin: "forgified-fabric-loom"
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+}
+
 allprojects {
     apply plugin: "java"
-    apply plugin: "architect-plugin"
+    apply plugin: "architectury-plugin"
 
     group "me.shedaniel"
     archivesBaseName = rootProject.name
     version = rootProject.mod_version
-}
 
-idea.project.settings {
-    delegateActions {
-        delegateBuildRunToGradle = false
-        testRunner = ActionDelegationConfig.TestRunner.PLATFORM
-    }
-    runConfigurations {
-        "Fabric: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":fabric")
-            taskNames = Collections.singletonList("runClient")
-        }
-        "Fabric: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":fabric")
-            taskNames = Collections.singletonList("runServer")
-        }
-        "Forge: Minecraft Client"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":forge")
-            taskNames = Collections.singletonList("runClient")
-        }
-        "Forge: Minecraft Server"(org.jetbrains.gradle.ext.Gradle) {
-            project = rootProject.project(":forge")
-            taskNames = Collections.singletonList("runServer")
-        }
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
     }
 }
 
 task buildMerged {
+    allprojects {
+        dependsOn it.tasks.getByName("build")
+    }
     doLast {
         def folder = file(".gradle/.mergemods")
         folder.mkdirs()
-        def fabricJar = file("fabric/build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
-        def forgeJar = file("forge/build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
+        def fabricJar = file("fabric/build/libs/${rootProject.name}-${rootProject.mod_version}-fabric.jar")
+        def forgeJar = file("forge/build/libs/${rootProject.name}-${rootProject.mod_version}-forge.jar")
         def fabricFolder = new File(folder, ".tempFabric")
         def forgeFolder = new File(folder, ".tempForge")
         def mergeFolder = new File(folder, ".tempMerge")
@@ -99,13 +87,15 @@ task buildMerged {
                             if (outFile.exists()) {
                                 def env = useFolder.getName().substring(5)
                                 def fileName = outFile.getAbsolutePath().replace(mergeFolder.getAbsolutePath(), "")
-                                def policyEnv = policyMap.get(fileName)
-                                if (policyEnv == null) {
-                                    throw new IllegalStateException("Unhandled duplicate file: $fileName")
+                                if (!ogFile.isFile() || !outFile.isFile() || !Arrays.equals(ogFile.readBytes(), outFile.readBytes())) {
+                                    def policyEnv = policyMap.get(fileName)
+                                    if (policyEnv == null) {
+                                        throw new IllegalStateException("Unhandled duplicate file: $fileName")
+                                    }
+                                    println "Chose env ${policyEnv.toUpperCase(Locale.ROOT)} for duplicate file: $fileName"
+                                    if (policyEnv != env)
+                                        return FileVisitResult.CONTINUE
                                 }
-                                println "Chose env ${policyEnv.toUpperCase(Locale.ROOT)} for duplicate file: $fileName"
-                                if (policyEnv != env)
-                                    return FileVisitResult.CONTINUE
                             }
                             if (!ogFile.isDirectory()) {
                                 org.apache.commons.io.FileUtils.copyFile(ogFile, outFile)

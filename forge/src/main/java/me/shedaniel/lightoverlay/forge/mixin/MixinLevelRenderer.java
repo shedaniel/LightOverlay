@@ -1,6 +1,6 @@
-package me.shedaniel.lightoverlay.fabric.mixin;
+package me.shedaniel.lightoverlay.forge.mixin;
 
-import me.shedaniel.lightoverlay.common.LightOverlayCore;
+import me.shedaniel.lightoverlay.common.LightOverlay;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
-public class MixinWorldRenderer {
+public class MixinLevelRenderer {
     @Inject(method = "setupRender", at = @At("HEAD"))
     private void setupTerrain(Camera camera, Frustum frustum, boolean bl, int i, boolean bl2, CallbackInfo ci) {
-        LightOverlayCore.frustum = frustum;
+        LightOverlay.frustum = frustum;
     }
 }
