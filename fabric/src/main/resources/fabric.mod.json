@@ -31,7 +31,7 @@
     "modmenu:clientsideOnly": true
   },
   "depends": {
-    "fabric-api": ">=0.29.1",
+    "fabric": ">=0.29.1",
     "architectury": ">=1.2.67"
   }
 }
