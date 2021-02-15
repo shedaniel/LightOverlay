@@ -32,6 +32,7 @@
   },
   "depends": {
     "fabric": ">=0.29.1",
-    "architectury": ">=1.2.67"
+    "architectury": ">=1.5.112",
+    "cloth-config2": ">=4.10.13"
   }
 }

@@ -8,6 +8,7 @@ minecraft {
 
 architectury {
     platformSetupLoomIde()
+    fabric()
 }
 
 processResources {
@@ -22,29 +23,26 @@ configurations {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.architect.minecraft}"
+    minecraft "com.mojang:minecraft:${rootProject.architectury.minecraft}"
     mappings minecraft.officialMojangMappings()
     modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modCompile "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-    modImplementation("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}") {
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}") {
         exclude(group: "net.fabricmc.fabric-api")
     }
     modImplementation("io.github.prospector:modmenu:${rootProject.modmenu_version}") {
         transitive = false
     }
-    include("me.shedaniel.cloth:config-2:${rootProject.cloth_config_version}") {
-        transitive = false
-    }
     modCompile("me.shedaniel:architectury:${rootProject.architectury_version}:fabric")
 
-    compileOnly(project(path: ":common")) {
+    implementation(project(path: ":common")) {
         transitive = false
     }
-    runtimeOnly(project(path: ":common", configuration: "transformedRuntime")) {
+    developmentFabric(project(path: ":common")) {
         transitive = false
     }
-    shadow(project(path: ":common", configuration: "transformed")) {
+    shadow(project(path: ":common", configuration: "transformProductionFabric")) {
         transitive = false
     }
 }

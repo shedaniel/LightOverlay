@@ -1,10 +1,13 @@
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.architect.minecraft}"
+    minecraft "com.mojang:minecraft:${rootProject.architectury.minecraft}"
     mappings minecraft.officialMojangMappings()
     modCompile "me.shedaniel:architectury:${rootProject.architectury_version}"
     modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modCompileOnly("me.shedaniel.cloth:cloth-config:${rootProject.cloth_config_version}") {
+        exclude(group: "net.fabricmc.fabric-api")
+    }
 }
 
-architect {
+architectury {
     common()
 }

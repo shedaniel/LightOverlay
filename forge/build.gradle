@@ -8,10 +8,11 @@ configurations {
 
 architectury {
     platformSetupLoomIde()
+    forge()
 }
 
 loom {
-    mixinConfig = "lightoverlay-forge.mixins.json"
+    mixinConfig "lightoverlay-forge.mixins.json"
 }
 
 repositories {
@@ -27,19 +28,19 @@ processResources {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${rootProject.architect.minecraft}")
+    minecraft("com.mojang:minecraft:${rootProject.architectury.minecraft}")
     mappings(minecraft.officialMojangMappings())
-    forge("net.minecraftforge:forge:${rootProject.architect.minecraft}-${project.forge_version}")
-    modCompile("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_forge}")
+    forge("net.minecraftforge:forge:${rootProject.architectury.minecraft}-${project.forge_version}")
+    modCompile("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
     modCompile("me.shedaniel:architectury:${rootProject.architectury_version}:forge")
 
-    compileOnly(project(path: ":common")) {
+    implementation(project(path: ":common")) {
         transitive = false
     }
-    runtimeOnly(project(path: ":common", configuration: "transformForgeFakeMod")) {
+    developmentForge(project(path: ":common")) {
         transitive = false
     }
-    shadow(project(path: ":common", configuration: "transformForge")) {
+    shadow(project(path: ":common", configuration: "transformProductionForge")) {
         transitive = false
     }
 }
