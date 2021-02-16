@@ -7,6 +7,7 @@ configurations {
 }
 
 architectury {
+    transformerVersion = "2.0.9999"
     platformSetupLoomIde()
     forge()
 }
@@ -15,16 +16,15 @@ loom {
     mixinConfig "lightoverlay-forge.mixins.json"
 }
 
-repositories {
-    jcenter()
-    maven { url "https://dl.bintray.com/shedaniel/cloth-config-2" }
-}
-
 processResources {
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
     }
     inputs.property "META-INF/mods.toml", project.version
+}
+
+repositories {
+    mavenLocal()
 }
 
 dependencies {
