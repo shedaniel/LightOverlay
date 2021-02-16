@@ -36,7 +36,6 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkBiomeContainer;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LayerLightEventListener;
@@ -222,7 +221,8 @@ public class LightOverlay {
                         map.put(pos.asLong(), Byte.valueOf((byte) level));
                     }
                 } else {
-                    CrossType type = getCrossType(pos, down, chunk, block, sky, entityContext);
+                    Biome biome = mushroom ? world.getBiome(pos) : null;
+                    CrossType type = getCrossType(pos, biome,down, chunk, block, sky, entityContext);
                     if (type != CrossType.NONE) {
                         map.put(pos.asLong(), type);
                     }
@@ -234,7 +234,7 @@ public class LightOverlay {
         }
     }
     
-    public static CrossType getCrossType(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
+    public static CrossType getCrossType(BlockPos pos, Biome biome, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
@@ -254,7 +254,7 @@ public class LightOverlay {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
             return CrossType.NONE;
-        if (!mushroom && CLIENT.level != null && Biome.BiomeCategory.MUSHROOM.equals(CLIENT.level.getBiome(pos).getBiomeCategory()))
+        if (!mushroom && Biome.BiomeCategory.MUSHROOM == biome.getBiomeCategory())
             return CrossType.NONE;
         int blockLightLevel = block.getLightValue(pos);
         int skyLightLevel = sky.getLightValue(pos);
@@ -498,7 +498,8 @@ public class LightOverlay {
                                 map.put(blockPos.asLong(), Byte.valueOf((byte) level));
                             }
                         } else {
-                            CrossType type = getCrossType(blockPos, downPos, world, block, sky, collisionContext);
+                            Biome biome = mushroom ? world.getBiome(blockPos) : null;
+                            CrossType type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
                             if (type != CrossType.NONE) {
                                 map.put(blockPos.asLong(), type);
                             }
