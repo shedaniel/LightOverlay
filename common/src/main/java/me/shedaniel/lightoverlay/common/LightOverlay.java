@@ -33,8 +33,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkBiomeContainer;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LayerLightEventListener;
@@ -68,9 +70,11 @@ public class LightOverlay {
     public static boolean showNumber = false;
     public static boolean smoothLines = true;
     public static boolean underwater = false;
+    public static boolean mushroom = false;
     public static float lineWidth = 1.0F;
     public static int yellowColor = 0xFFFF00, redColor = 0xFF0000, secondaryColor = 0x0000FF;
     public static File configFile;
+
     private static KeyMapping enableOverlay;
     private static boolean enabled = false;
     private static final LazyLoadedValue<EntityType<Entity>> TESTING_ENTITY_TYPE = new LazyLoadedValue<>(() ->
@@ -249,6 +253,8 @@ public class LightOverlay {
             return CrossType.NONE;
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
+            return CrossType.NONE;
+        if (!mushroom && CLIENT.level != null && Biome.BiomeCategory.MUSHROOM.equals(CLIENT.level.getBiome(pos).getBiomeCategory()))
             return CrossType.NONE;
         int blockLightLevel = block.getLightValue(pos);
         int skyLightLevel = sky.getLightValue(pos);
