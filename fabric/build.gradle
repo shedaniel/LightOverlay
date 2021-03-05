@@ -7,7 +7,7 @@ minecraft {
 }
 
 architectury {
-    transformerVersion = "2.0.9999"
+//    transformerVersion = "2.0.9999"
     platformSetupLoomIde()
     fabric()
 }
@@ -64,3 +64,4 @@ remapJar {
     input.set(shadowJar.archivePath)
     archiveClassifier = "fabric"
 }
+
