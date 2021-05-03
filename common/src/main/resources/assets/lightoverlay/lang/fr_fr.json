@@ -1,0 +1,20 @@
+{
+  "key.lightoverlay.category": "Light Overlay",
+  "key.lightoverlay.enable_overlay": "Activer Light Overlay",
+  "description.lightoverlay.caching": "La mise en cache est recommandée si la portée est supérieure à 16 ou si vous utilisez un appareil peu performant.",
+  "config.lightoverlay.general": "Général",
+  "config.lightoverlay.reach": "Portée :",
+  "config.lightoverlay.caching": "Mise en cache :",
+  "config.lightoverlay.crossLevel": "Niveau de luminosité :",
+  "config.lightoverlay.secondaryLevel": "Niveau de luminosité secondaire :",
+  "config.lightoverlay.showNumber": "Afficher des nombres :",
+  "config.lightoverlay.smoothLines": "Lignes lisses :",
+  "config.lightoverlay.underwater": "Afficher sous l'eau :",
+  "config.lightoverlay.lineWidth": "Largeur des lignes :",
+  "config.lightoverlay.yellowColor": "Couleur jaune :",
+  "config.lightoverlay.secondaryColor": "Couleur secondaire :",
+  "config.lightoverlay.redColor": "Couleur rouge :",
+  "config.lightoverlay.invalidColor": "Couleur non valide",
+  "config.lightoverlay.mushroom": "Afficher dans les biomes champignons :",
+  "config.lightoverlay.useListWhileCaching": "Utiliser glList à la mise en cache :"
+}
