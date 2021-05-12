@@ -7,7 +7,7 @@ configurations {
 }
 
 architectury {
-    transformerVersion = "2.0.9999"
+//    transformerVersion = "2.0.9999"
     platformSetupLoomIde()
     forge()
 }
@@ -58,3 +58,4 @@ remapJar {
     input.set(shadowJar.archivePath)
     archiveClassifier = "forge"
 }
+
