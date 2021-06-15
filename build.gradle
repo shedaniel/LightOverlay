@@ -1,25 +1,6 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("commons-io:commons-io:2.6")
-    }
-}
-
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
-import java.util.stream.Stream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
-
 plugins {
-    id "architectury-plugin" version "3.0.76"
-    id "forgified-fabric-loom" version "0.6.67" apply false
+    id "architectury-plugin" version "3.2-SNAPSHOT"
+    id "dev.architectury.loom" version "0.7.2-SNAPSHOT" apply false
 }
 
 architectury {
@@ -27,7 +8,7 @@ architectury {
 }
 
 subprojects {
-    apply plugin: "forgified-fabric-loom"
+    apply plugin: "dev.architectury.loom"
 
     loom {
         silentMojangMappingsLicense()
@@ -42,141 +23,12 @@ allprojects {
     archivesBaseName = rootProject.name
     version = rootProject.mod_version
 
+    repositories {
+        maven { url "https://maven.terraformersmc.com/releases" }
+    }
+
     tasks.withType(JavaCompile) {
         options.encoding = "UTF-8"
-    }
-}
-
-task buildMerged {
-    allprojects {
-        dependsOn it.tasks.getByName("build")
-    }
-    doLast {
-        def folder = file(".gradle/.mergemods")
-        folder.mkdirs()
-        def fabricJar = file("fabric/build/libs/${rootProject.name}-${rootProject.mod_version}-fabric.jar")
-        def forgeJar = file("forge/build/libs/${rootProject.name}-${rootProject.mod_version}-forge.jar")
-        def fabricFolder = new File(folder, ".tempFabric")
-        def forgeFolder = new File(folder, ".tempForge")
-        def mergeFolder = new File(folder, ".tempMerge")
-        def policyMap = new HashMap<String, String>()
-        file("merging.policy").eachLine {
-            if (it.isBlank() || it.startsWith("#")) return
-            def env = it.substring(0, it.indexOf(' '))
-            if (env == "FABRIC")
-                policyMap.put(it.substring(env.length() + 1), "Fabric")
-            else if (env == "FORGE")
-                policyMap.put(it.substring(env.length() + 1), "Forge")
-            else throw new IllegalStateException("Illegal env $env at $it")
-        }
-        forgeFolder.deleteDir()
-        fabricFolder.deleteDir()
-        mergeFolder.deleteDir()
-        unzip(fabricJar, fabricFolder)
-        unzip(forgeJar, forgeFolder)
-        mergeFolder.mkdirs()
-        Stream.of(forgeFolder, fabricFolder).each { useFolder ->
-            try {
-                Files.walkFileTree(useFolder.toPath(), new SimpleFileVisitor<Path>() {
-                    @Override
-                    FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        try {
-                            File ogFile = file.toFile()
-                            File outFile = new File(mergeFolder, ogFile.getAbsolutePath().replace(useFolder.getAbsolutePath(), ""))
-                            outFile.getParentFile().mkdirs()
-                            if (outFile.exists()) {
-                                def env = useFolder.getName().substring(5)
-                                def fileName = outFile.getAbsolutePath().replace(mergeFolder.getAbsolutePath(), "")
-                                if (!ogFile.isFile() || !outFile.isFile() || !Arrays.equals(ogFile.readBytes(), outFile.readBytes())) {
-                                    def policyEnv = policyMap.get(fileName)
-                                    if (policyEnv == null) {
-                                        throw new IllegalStateException("Unhandled duplicate file: $fileName")
-                                    }
-                                    println "Chose env ${policyEnv.toUpperCase(Locale.ROOT)} for duplicate file: $fileName"
-                                    if (policyEnv != env)
-                                        return FileVisitResult.CONTINUE
-                                }
-                            }
-                            if (!ogFile.isDirectory()) {
-                                org.apache.commons.io.FileUtils.copyFile(ogFile, outFile)
-                            } else {
-                                org.apache.commons.io.FileUtils.copyDirectory(ogFile, outFile)
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace()
-                            System.exit(0)
-                        }
-                        return FileVisitResult.CONTINUE
-                    }
-                })
-            } catch (IOException e) {
-                e.printStackTrace()
-                System.exit(0)
-            }
-        }
-        File finalMerge = file("build/libs/${rootProject.name}-${rootProject.mod_version}.jar")
-        finalMerge.parentFile.mkdirs()
-        finalMerge.delete()
-        compress(mergeFolder.toPath(), finalMerge)
-        folder.deleteDir()
-    }
-}
-
-rootProject.subprojects.forEach {
-    buildMerged.mustRunAfter it.tasks.getByName("build")
-}
-
-static def compress(Path sourceDir, File zipFile) {
-    try {
-        final ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(zipFile))
-        Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
-            @Override
-            FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                try {
-                    Path targetFile = sourceDir.relativize(file)
-                    outputStream.putNextEntry(new ZipEntry(targetFile.toString()))
-                    byte[] bytes = Files.readAllBytes(file)
-                    outputStream.write(bytes, 0, bytes.length)
-                    outputStream.closeEntry()
-                } catch (IOException e) {
-                    e.printStackTrace()
-                }
-                return FileVisitResult.CONTINUE
-            }
-        })
-        outputStream.close()
-    } catch (IOException e) {
-        e.printStackTrace()
-    }
-}
-
-static def unzip(File zipFile, File destDir) {
-    if (!destDir.exists())
-        destDir.mkdirs()
-    FileInputStream fis
-    byte[] buffer = new byte[1024]
-    try {
-        fis = new FileInputStream(zipFile)
-        ZipInputStream zis = new ZipInputStream(fis)
-        ZipEntry zipEntry = zis.getNextEntry()
-        while (zipEntry != null) {
-            if (!zipEntry.isDirectory()) {
-                File newFile = new File(destDir, zipEntry.getName())
-                new File(newFile.getParent()).mkdirs()
-                FileOutputStream fos = new FileOutputStream(newFile)
-                int len
-                while ((len = zis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len)
-                }
-                fos.close()
-            }
-            zis.closeEntry()
-            zipEntry = zis.getNextEntry()
-        }
-        zis.closeEntry()
-        zis.close()
-        fis.close()
-    } catch (IOException e) {
-        e.printStackTrace()
+        options.release = 16
     }
 }

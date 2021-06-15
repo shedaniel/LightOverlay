@@ -7,7 +7,6 @@ configurations {
 }
 
 architectury {
-    transformerVersion = "2.0.9999"
     platformSetupLoomIde()
     forge()
 }
@@ -21,10 +20,6 @@ processResources {
         expand "version": project.version
     }
     inputs.property "META-INF/mods.toml", project.version
-}
-
-repositories {
-    mavenLocal()
 }
 
 dependencies {

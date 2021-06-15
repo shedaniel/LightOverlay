@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
 }
 
 minecraft {
@@ -7,7 +7,6 @@ minecraft {
 }
 
 architectury {
-    transformerVersion = "2.0.9999"
     platformSetupLoomIde()
     fabric()
 }
@@ -20,26 +19,22 @@ processResources {
 }
 
 configurations {
-    shadow
-}
-
-repositories {
-    mavenLocal()
+    shadowCommon
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.architectury.minecraft}"
     mappings minecraft.officialMojangMappings()
-    modCompile "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
-    modCompile "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}") {
         exclude(group: "net.fabricmc.fabric-api")
     }
-    modImplementation("io.github.prospector:modmenu:${rootProject.modmenu_version}") {
+    modImplementation("com.terraformersmc:modmenu:${rootProject.modmenu_version}") {
         transitive = false
     }
-    modCompile("me.shedaniel:architectury:${rootProject.architectury_version}:fabric")
+    modImplementation("dev.architectury:architectury-fabric:${rootProject.architectury_version}")
 
     implementation(project(path: ":common")) {
         transitive = false
@@ -47,15 +42,13 @@ dependencies {
     developmentFabric(project(path: ":common")) {
         transitive = false
     }
-    shadow(project(path: ":common", configuration: "transformProductionFabric")) {
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) {
         transitive = false
     }
 }
 
 shadowJar {
-    relocate "me.shedaniel.lightoverlay.common", "me.shedaniel.lightoverlay.common.fabric"
-
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shadowCommon]
     classifier "shadow"
 }
 

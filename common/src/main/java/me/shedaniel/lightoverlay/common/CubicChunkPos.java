@@ -2,8 +2,6 @@ package me.shedaniel.lightoverlay.common;
 
 import net.minecraft.core.BlockPos;
 
-import java.util.Objects;
-
 public class CubicChunkPos {
     public final int x;
     public final int y;
@@ -23,7 +21,7 @@ public class CubicChunkPos {
     
     public CubicChunkPos(BlockPos blockPos) {
         this.x = blockPos.getX() >> 4;
-        this.y = blockPos.getY() >> 4;
+        this.y = blockPos.getY() >> 5;
         this.z = blockPos.getZ() >> 4;
     }
     
@@ -53,7 +51,7 @@ public class CubicChunkPos {
     }
     
     public int getMinBlockY() {
-        return this.y << 4;
+        return this.y << 5;
     }
     
     public int getMinBlockZ() {
@@ -65,7 +63,7 @@ public class CubicChunkPos {
     }
     
     public int getMaxBlockY() {
-        return (this.y << 4) + 15;
+        return (this.y << 5) + 31;
     }
     
     public int getMaxBlockZ() {
@@ -81,7 +79,16 @@ public class CubicChunkPos {
     }
     
     @Override
+    public String toString() {
+        return "CubicChunkPos{" +
+               "x=" + x +
+               ", y=" + y +
+               ", z=" + z +
+               '}';
+    }
+    
+    @Override
     public int hashCode() {
-        return Objects.hash(x, y, z);
+        return Long.hashCode(toLong());
     }
 }
