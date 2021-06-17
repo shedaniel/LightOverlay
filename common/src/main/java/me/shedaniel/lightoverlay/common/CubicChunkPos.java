@@ -74,7 +74,7 @@ public class CubicChunkPos {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CubicChunkPos that = (CubicChunkPos) o;
+        var that = (CubicChunkPos) o;
         return x == that.x && y == that.y && z == that.z;
     }
     

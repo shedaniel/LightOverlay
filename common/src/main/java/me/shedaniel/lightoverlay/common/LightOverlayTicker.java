@@ -1,12 +1,11 @@
 package me.shedaniel.lightoverlay.common;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -19,15 +18,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.logging.log4j.LogManager;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
@@ -37,7 +37,7 @@ public class LightOverlayTicker {
     private long ticks = 0;
     private static int threadNumber = 0;
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
-        Thread thread = new Thread(r, "light-overlay-" + threadNumber++);
+        var thread = new Thread(r, "light-overlay-" + threadNumber++);
         thread.setDaemon(true);
         return thread;
     });
@@ -65,32 +65,32 @@ public class LightOverlayTicker {
                 EXECUTOR.getQueue().clear();
                 CHUNK_MAP.clear();
             } else {
-                LocalPlayer player = minecraft.player;
-                ClientLevel world = minecraft.level;
-                CollisionContext collisionContext = CollisionContext.of(player);
+                var player = minecraft.player;
+                var world = minecraft.level;
+                var collisionContext = CollisionContext.of(player);
                 
                 if (!LightOverlay.caching) {
                     CALCULATING_POS.clear();
                     POS.clear();
                     CHUNK_MAP.clear();
-                    BlockPos playerPos = player.blockPosition();
-                    LayerLightEventListener block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
-                    LayerLightEventListener sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
-                    BlockPos.MutableBlockPos downPos = new BlockPos.MutableBlockPos();
-                    Iterable<BlockPos> iterate = BlockPos.betweenClosed(playerPos.getX() - LightOverlay.reach, playerPos.getY() - LightOverlay.reach, playerPos.getZ() - LightOverlay.reach,
+                    var playerPos = player.blockPosition();
+                    var block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
+                    var sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
+                    var downPos = new BlockPos.MutableBlockPos();
+                    var iterate = BlockPos.betweenClosed(playerPos.getX() - LightOverlay.reach, playerPos.getY() - LightOverlay.reach, playerPos.getZ() - LightOverlay.reach,
                             playerPos.getX() + LightOverlay.reach, playerPos.getY() + LightOverlay.reach, playerPos.getZ() + LightOverlay.reach);
                     Long2ByteMap chunkData = new Long2ByteOpenHashMap();
                     CHUNK_MAP.put(new CubicChunkPos(0, 0, 0), chunkData);
-                    for (BlockPos blockPos : iterate) {
+                    for (var blockPos : iterate) {
                         downPos.set(blockPos.getX(), blockPos.getY() - 1, blockPos.getZ());
                         if (LightOverlay.showNumber) {
-                            int level = getCrossLevel(blockPos, downPos, world, block, collisionContext);
+                            var level = getCrossLevel(blockPos, downPos, world, block, collisionContext);
                             if (level >= 0) {
                                 chunkData.put(blockPos.asLong(), (byte) level);
                             }
                         } else {
-                            Biome biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
-                            byte type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
+                            var biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
+                            var type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
                             if (type != LightOverlay.CROSS_NONE) {
                                 chunkData.put(blockPos.asLong(), type);
                             }
@@ -99,37 +99,37 @@ public class LightOverlayTicker {
                 } else {
                     var height = Mth.ceil(Minecraft.getInstance().level.getHeight() / 32.0);
                     var start = Math.floorDiv(Minecraft.getInstance().level.getMinBuildHeight(), 32);
-                    int playerPosX = ((int) player.getX()) >> 4;
-                    int playerPosY = ((int) player.getY()) >> 5;
-                    int playerPosZ = ((int) player.getZ()) >> 4;
+                    var playerPosX = ((int) player.getX()) >> 4;
+                    var playerPosY = ((int) player.getY()) >> 5;
+                    var playerPosZ = ((int) player.getZ()) >> 4;
                     var chunkRange = LightOverlay.getChunkRange();
-                    for (int chunkX = playerPosX - chunkRange; chunkX <= playerPosX + chunkRange; chunkX++) {
-                        for (int chunkY = Math.max(playerPosY - Math.max(1, chunkRange >> 1), start); chunkY <= playerPosY + Math.max(1, chunkRange >> 1) && chunkY <= start + height; chunkY++) {
-                            for (int chunkZ = playerPosZ - chunkRange; chunkZ <= playerPosZ + chunkRange; chunkZ++) {
+                    for (var chunkX = playerPosX - chunkRange; chunkX <= playerPosX + chunkRange; chunkX++) {
+                        for (var chunkY = Math.max(playerPosY - Math.max(1, chunkRange >> 1), start); chunkY <= playerPosY + Math.max(1, chunkRange >> 1) && chunkY <= start + height; chunkY++) {
+                            for (var chunkZ = playerPosZ - chunkRange; chunkZ <= playerPosZ + chunkRange; chunkZ++) {
                                 if (Mth.abs(chunkX - playerPosX) > chunkRange || Mth.abs(chunkY - playerPosY) > chunkRange || Mth.abs(chunkZ - playerPosZ) > chunkRange)
                                     continue;
-                                CubicChunkPos chunkPos = new CubicChunkPos(chunkX, chunkY, chunkZ);
+                                var chunkPos = new CubicChunkPos(chunkX, chunkY, chunkZ);
                                 if (!CHUNK_MAP.containsKey(chunkPos))
                                     queueChunk(chunkPos);
                             }
                         }
                     }
-                    for (int p = 0; p < 3; p++) {
+                    for (var p = 0; p < 3; p++) {
                         if (EXECUTOR.getQueue().size() >= Runtime.getRuntime().availableProcessors()) break;
                         double d1 = Double.MAX_VALUE, d2 = Double.MAX_VALUE, d3 = Double.MAX_VALUE;
                         CubicChunkPos c1 = null, c2 = null, c3 = null;
                         synchronized (POS) {
-                            Iterator<CubicChunkPos> iterator = POS.iterator();
+                            var iterator = POS.iterator();
                             while (iterator.hasNext()) {
-                                CubicChunkPos pos = iterator.next();
+                                var pos = iterator.next();
                                 if (Mth.abs(pos.x - playerPosX) > chunkRange || Mth.abs(pos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(pos.z - playerPosZ) > chunkRange || CALCULATING_POS.contains(pos)) {
                                     iterator.remove();
                                 } else {
                                     if (LightOverlay.renderer.isFrustumVisible(pos.getMinBlockX(), pos.getMinBlockY(), pos.getMinBlockZ(), pos.getMaxBlockX(), pos.getMaxBlockY(), pos.getMaxBlockZ())) {
-                                        int dx = Math.abs(pos.x - playerPosX);
-                                        int dy = Math.abs(pos.y - playerPosY) << 1;
-                                        int dz = Math.abs(pos.z - playerPosZ);
-                                        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                                        var dx = Math.abs(pos.x - playerPosX);
+                                        var dy = Math.abs(pos.y - playerPosY) << 1;
+                                        var dz = Math.abs(pos.z - playerPosZ);
+                                        var distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
                                         if (distance < d1) {
                                             d3 = d2;
                                             d2 = d1;
@@ -150,9 +150,9 @@ public class LightOverlayTicker {
                                 }
                             }
                         }
-                        CubicChunkPos finalC1 = c1;
-                        CubicChunkPos finalC2 = c2;
-                        CubicChunkPos finalC3 = c3;
+                        var finalC1 = c1;
+                        var finalC2 = c2;
+                        var finalC3 = c3;
                         if (finalC1 != null) {
                             CALCULATING_POS.add(finalC1);
                             POS.remove(finalC1);
@@ -165,12 +165,18 @@ public class LightOverlayTicker {
                                 }
                             }
                             EXECUTOR.submit(() -> {
-                                int playerPosX1 = ((int) minecraft.player.getX()) >> 4;
-                                int playerPosY1 = ((int) minecraft.player.getY()) >> 5;
-                                int playerPosZ1 = ((int) minecraft.player.getZ()) >> 4;
-                                if (finalC1 != null) processChunk(finalC1, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
-                                if (finalC2 != null) processChunk(finalC2, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
-                                if (finalC3 != null) processChunk(finalC3, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
+                                var playerPosX1 = ((int) minecraft.player.getX()) >> 4;
+                                var playerPosY1 = ((int) minecraft.player.getY()) >> 5;
+                                var playerPosZ1 = ((int) minecraft.player.getZ()) >> 4;
+                                var count = 0;
+                                var stopwatch = Stopwatch.createStarted();
+                                if (finalC1 != null) count += processChunk(finalC1, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
+                                if (finalC2 != null) count += processChunk(finalC2, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
+                                if (finalC3 != null) count += processChunk(finalC3, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
+                                System.out.println(stopwatch.stop());
+                                synchronized (this) {
+                                    LightOverlay.blocksScanned += count;
+                                }
                             });
                         }
                     }
@@ -184,49 +190,55 @@ public class LightOverlayTicker {
         }
     }
     
-    private void processChunk(CubicChunkPos pos, int playerPosX, int playerPosY, int playerPosZ, CollisionContext context) {
+    private int processChunk(CubicChunkPos pos, int playerPosX, int playerPosY, int playerPosZ, CollisionContext context) {
         CALCULATING_POS.remove(pos);
-        int chunkRange = LightOverlay.getChunkRange();
+        var chunkRange = LightOverlay.getChunkRange();
         if (Mth.abs(pos.x - playerPosX) > chunkRange || Mth.abs(pos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(pos.z - playerPosZ) > chunkRange || POS.contains(pos)) {
-            return;
+            return 0;
         }
         try {
-            calculateChunk(minecraft.level.getChunkSource().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), minecraft.level, pos, context);
+            return calculateChunk(minecraft.level.getChunkSource().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), minecraft.level, pos, context);
         } catch (Throwable throwable) {
             LogManager.getLogger().throwing(throwable);
         }
+        return 0;
     }
     
-    private void calculateChunk(LevelChunk chunk, Level world, CubicChunkPos chunkPos, CollisionContext collisionContext) {
+    private int calculateChunk(LevelChunk chunk, Level world, CubicChunkPos chunkPos, CollisionContext collisionContext) {
         if (world != null && chunk != null) {
             Long2ByteMap chunkData = new Long2ByteOpenHashMap();
-            LayerLightEventListener block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
-            LayerLightEventListener sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
-            for (BlockPos pos : BlockPos.betweenClosed(chunkPos.getMinBlockX(), chunkPos.getMinBlockY(), chunkPos.getMinBlockZ(), chunkPos.getMaxBlockX(), chunkPos.getMaxBlockY(), chunkPos.getMaxBlockZ())) {
-                BlockPos down = pos.below();
+            var block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
+            var sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
+            var down = new BlockPos.MutableBlockPos();
+            var count = 0;
+            for (var pos : BlockPos.betweenClosed(chunkPos.getMinBlockX(), chunkPos.getMinBlockY(), chunkPos.getMinBlockZ(), chunkPos.getMaxBlockX(), chunkPos.getMaxBlockY(), chunkPos.getMaxBlockZ())) {
+                down.setWithOffset(pos, 0, -1, 0);
+                count++;
                 if (LightOverlay.showNumber) {
-                    int level = getCrossLevel(pos, down, chunk, block, collisionContext);
+                    var level = getCrossLevel(pos, down, chunk, block, collisionContext);
                     if (level >= 0) {
                         chunkData.put(pos.asLong(), (byte) level);
                     }
                 } else {
-                    Biome biome = !LightOverlay.mushroom ? world.getBiome(pos) : null;
-                    byte type = getCrossType(pos, biome, down, chunk, block, sky, collisionContext);
+                    var biome = !LightOverlay.mushroom ? world.getBiome(pos) : null;
+                    var type = getCrossType(pos, biome, down, chunk, block, sky, collisionContext);
                     if (type != LightOverlay.CROSS_NONE) {
                         chunkData.put(pos.asLong(), type);
                     }
                 }
             }
             CHUNK_MAP.put(chunkPos, chunkData);
+            return count;
         } else {
             CHUNK_MAP.remove(chunkPos);
+            return 0;
         }
     }
     
     public byte getCrossType(BlockPos pos, Biome biome, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
-        BlockState blockBelowState = world.getBlockState(down);
-        BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
+        var blockBelowState = world.getBlockState(down);
+        var blockUpperState = world.getBlockState(pos);
+        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
         if (!LightOverlay.underwater && !blockUpperState.getFluidState().isEmpty())
             return LightOverlay.CROSS_NONE;
         // Check if the outline is full
@@ -245,8 +257,8 @@ public class LightOverlayTicker {
             return LightOverlay.CROSS_NONE;
         if (!LightOverlay.mushroom && Biome.BiomeCategory.MUSHROOM == biome.getBiomeCategory())
             return LightOverlay.CROSS_NONE;
-        int blockLightLevel = block.getLightValue(pos);
-        int skyLightLevel = sky.getLightValue(pos);
+        var blockLightLevel = block.getLightValue(pos);
+        var skyLightLevel = sky.getLightValue(pos);
         if (blockLightLevel > LightOverlay.higherCrossLevel)
             return LightOverlay.CROSS_NONE;
         if (skyLightLevel > LightOverlay.higherCrossLevel)
@@ -255,10 +267,10 @@ public class LightOverlayTicker {
     }
     
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener view, CollisionContext collisionContext) {
-        BlockState blockBelowState = world.getBlockState(down);
-        BlockState blockUpperState = world.getBlockState(pos);
-        VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, collisionContext);
-        VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, collisionContext);
+        var blockBelowState = world.getBlockState(down);
+        var blockUpperState = world.getBlockState(pos);
+        var collisionShape = blockBelowState.getCollisionShape(world, down, collisionContext);
+        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, collisionContext);
         if (!LightOverlay.underwater && !blockUpperState.getFluidState().isEmpty())
             return -1;
         if (!blockBelowState.getFluidState().isEmpty())

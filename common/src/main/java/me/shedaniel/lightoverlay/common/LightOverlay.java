@@ -1,10 +1,8 @@
 package me.shedaniel.lightoverlay.common;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.PoseStack;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.injectables.targets.ArchitecturyTarget;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import net.minecraft.client.KeyMapping;
@@ -17,7 +15,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Properties;
-import java.util.function.Consumer;
 
 public class LightOverlay {
     public static final DecimalFormat FORMAT = new DecimalFormat("#.#");
@@ -39,6 +36,7 @@ public class LightOverlay {
     
     public static LightOverlayTicker ticker = new LightOverlayTicker();
     public static LightOverlayRenderer renderer = new LightOverlayRenderer(ticker);
+    public static int blocksScanned = 0;
     
     public static void register() {
         // Load Config
@@ -48,14 +46,12 @@ public class LightOverlay {
         enableOverlay = createKeyBinding(new ResourceLocation("lightoverlay", "enable_overlay"), InputConstants.Type.KEYSYM, 296, "key.lightoverlay.category");
         KeyMappingRegistry.register(enableOverlay);
         
-        registerDebugRenderer(renderer);
-        
         ClientGuiEvent.DEBUG_TEXT_LEFT.register(list -> {
             if (enabled) {
                 if (caching) {
-                    list.add(String.format("[Light Overlay] Chunks to queue: %02d", ticker.POS.size()));
+                    list.add(String.format("[Light Overlay] Chunks to queue: %02d; %d Blocks Scanned", ticker.POS.size(), blocksScanned));
                 } else {
-                    list.add("[Light Overlay] Enabled");
+                    list.add(String.format("[Light Overlay] Enabled; %d Blocks Scanned", blocksScanned));
                 }
             } else {
                 list.add("[Light Overlay] Disabled");
@@ -66,9 +62,9 @@ public class LightOverlay {
     
     
     public static void queueChunkAndNear(CubicChunkPos pos) {
-        for (int xOffset = -1; xOffset <= 1; xOffset++) {
-            for (int yOffset = -1; yOffset <= 1; yOffset++) {
-                for (int zOffset = -1; zOffset <= 1; zOffset++) {
+        for (var xOffset = -1; xOffset <= 1; xOffset++) {
+            for (var yOffset = -1; yOffset <= 1; yOffset++) {
+                for (var zOffset = -1; zOffset <= 1; zOffset++) {
                     queueChunk(new CubicChunkPos(pos.x + xOffset, pos.y + yOffset, pos.z + zOffset));
                 }
             }
@@ -91,8 +87,8 @@ public class LightOverlay {
             secondaryColor = 0x0000FF;
             if (!file.exists() || !file.canRead())
                 saveConfig(file);
-            FileInputStream fis = new FileInputStream(file);
-            Properties properties = new Properties();
+            var fis = new FileInputStream(file);
+            var properties = new Properties();
             properties.load(fis);
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
@@ -152,7 +148,7 @@ public class LightOverlay {
     }
     
     public static void saveConfig(File file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file, false);
+        var fos = new FileOutputStream(file, false);
         fos.write("# Light Overlay Config".getBytes());
         fos.write("\n".getBytes());
         fos.write(("reach=" + reach).getBytes());
@@ -193,15 +189,6 @@ public class LightOverlay {
     
     private static KeyMapping createKeyBinding(ResourceLocation id, InputConstants.Type type, int code, String category) {
         return new KeyMapping("key." + id.getNamespace() + "." + id.getPath(), type, code, category);
-    }
-    
-    
-    private static void registerDebugRenderer(Consumer<PoseStack> runnable) {
-        try {
-            Class.forName("me.shedaniel.lightoverlay." + ArchitecturyTarget.getCurrentTarget() + ".LightOverlayImpl").getDeclaredField("debugRenderer").set(null, runnable);
-        } catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
-        }
     }
     
     public static final byte CROSS_YELLOW = 0;

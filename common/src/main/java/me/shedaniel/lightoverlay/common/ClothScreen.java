@@ -1,9 +1,6 @@
 package me.shedaniel.lightoverlay.common;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
-import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import me.shedaniel.clothconfig2.gui.entries.IntegerSliderEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -15,14 +12,14 @@ import java.util.Optional;
 
 public class ClothScreen {
     public static Screen getConfigScreenByCloth(Screen parent) {
-        ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle(new TranslatableComponent("key.lightoverlay.category"));
+        var builder = ConfigBuilder.create().setParentScreen(parent).setTitle(new TranslatableComponent("key.lightoverlay.category"));
         
-        ConfigEntryBuilder eb = builder.entryBuilder();
-        ConfigCategory general = builder.getOrCreateCategory(new TranslatableComponent("config.lightoverlay.general"));
+        var eb = builder.entryBuilder();
+        var general = builder.getOrCreateCategory(new TranslatableComponent("config.lightoverlay.general"));
         general.addEntry(eb.startTextDescription(Component.nullToEmpty("§7" + I18n.get("description.lightoverlay.caching"))).build());
         general.addEntry(eb.startBooleanToggle(new TranslatableComponent("config.lightoverlay.caching"), LightOverlay.caching).setDefaultValue(false).setSaveConsumer(bool -> LightOverlay.caching = bool).build());
         general.addEntry(eb.startIntSlider(new TranslatableComponent("config.lightoverlay.reach"), LightOverlay.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> Component.nullToEmpty("Reach: " + integer + " Blocks")).setSaveConsumer(integer -> LightOverlay.reach = integer).build());
-        IntegerSliderEntry crossLevel = eb.startIntSlider(new TranslatableComponent("config.lightoverlay.crossLevel"), LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> Component.nullToEmpty("Cross Level: " + integer)).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build();
+        var crossLevel = eb.startIntSlider(new TranslatableComponent("config.lightoverlay.crossLevel"), LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> Component.nullToEmpty("Cross Level: " + integer)).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build();
         general.addEntry(crossLevel);
         general.addEntry(eb.startIntSlider(new TranslatableComponent("config.lightoverlay.secondaryLevel"), LightOverlay.secondaryLevel, -1, 15)
                 .setErrorSupplier(integer -> {

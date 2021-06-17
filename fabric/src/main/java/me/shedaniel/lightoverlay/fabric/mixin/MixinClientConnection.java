@@ -29,7 +29,7 @@ public class MixinClientConnection {
             } else if (packet instanceof ClientboundSetChunkCacheCenterPacket p) {
                 var height = Mth.ceil(level.getHeight() / 32.0);
                 var start = Math.floorDiv(level.getMinBuildHeight(), 32);
-                for (int y = start; y < start + height; y++) {
+                for (var y = start; y < start + height; y++) {
                     LightOverlay.queueChunkAndNear(new CubicChunkPos(p.getX(), y, p.getZ()));
                 }
             } else if (packet instanceof ClientboundSectionBlocksUpdatePacket p) {
@@ -37,7 +37,7 @@ public class MixinClientConnection {
             } else if (packet instanceof ClientboundLightUpdatePacket p) {
                 var height = Mth.ceil(level.getHeight() / 32.0);
                 var start = Math.floorDiv(level.getMinBuildHeight(), 32);
-                for (int y = start; y < start + height; y++) {
+                for (var y = start; y < start + height; y++) {
                     LightOverlay.queueChunk(new CubicChunkPos(p.getX(), y, p.getZ()));
                 }
             }
