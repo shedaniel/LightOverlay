@@ -16,12 +16,14 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.Collections;
@@ -49,7 +51,25 @@ public class LightOverlayTicker {
     
     public void queueChunk(CubicChunkPos pos) {
         if (LightOverlay.enabled && LightOverlay.caching && !CALCULATING_POS.contains(pos)) {
-            POS.add(pos);
+            if (minecraft.level != null) {
+                var chunk = minecraft.level.getChunkSource().getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
+                if (chunk == null) return;
+                var sections = ((LevelChunkAccess) chunk).lightoverlay_getSections();
+                var firstSectionIndex = pos.y << 1 - chunk.getMinSection();
+                if (firstSectionIndex >= 0 && firstSectionIndex < sections.length) {
+                    var section = sections[firstSectionIndex];
+                    if (!LevelChunkSection.isEmpty(section)) {
+                        POS.add(pos);
+                        return;
+                    }
+                }
+                if (firstSectionIndex + 1 >= 0 && firstSectionIndex + 1 < sections.length) {
+                    var section = sections[firstSectionIndex + 1];
+                    if (!LevelChunkSection.isEmpty(section)) {
+                        POS.add(pos);
+                    }
+                }
+            }
         }
     }
     
@@ -83,18 +103,18 @@ public class LightOverlayTicker {
                     CHUNK_MAP.put(new CubicChunkPos(0, 0, 0), chunkData);
                     for (var blockPos : iterate) {
                         downPos.set(blockPos.getX(), blockPos.getY() - 1, blockPos.getZ());
-                        if (LightOverlay.showNumber) {
-                            var level = getCrossLevel(blockPos, downPos, world, block, collisionContext);
-                            if (level >= 0) {
-                                chunkData.put(blockPos.asLong(), (byte) level);
-                            }
-                        } else {
-                            var biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
-                            var type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
-                            if (type != LightOverlay.CROSS_NONE) {
-                                chunkData.put(blockPos.asLong(), type);
-                            }
-                        }
+//                        if (LightOverlay.showNumber) {
+//                            var level = getCrossLevel(blockPos, downPos, world, block, collisionContext);
+//                            if (level >= 0) {
+//                                chunkData.put(blockPos.asLong(), (byte) level);
+//                            }
+//                        } else {
+//                            var biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
+//                            var type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
+//                            if (type != LightOverlay.CROSS_NONE) {
+//                                chunkData.put(blockPos.asLong(), type);
+//                            }
+//                        }
                     }
                 } else {
                     var height = Mth.ceil(Minecraft.getInstance().level.getHeight() / 32.0);
@@ -169,11 +189,9 @@ public class LightOverlayTicker {
                                 var playerPosY1 = ((int) minecraft.player.getY()) >> 5;
                                 var playerPosZ1 = ((int) minecraft.player.getZ()) >> 4;
                                 var count = 0;
-                                var stopwatch = Stopwatch.createStarted();
                                 if (finalC1 != null) count += processChunk(finalC1, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
                                 if (finalC2 != null) count += processChunk(finalC2, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
                                 if (finalC3 != null) count += processChunk(finalC3, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
-                                System.out.println(stopwatch.stop());
                                 synchronized (this) {
                                     LightOverlay.blocksScanned += count;
                                 }
@@ -196,37 +214,27 @@ public class LightOverlayTicker {
         if (Mth.abs(pos.x - playerPosX) > chunkRange || Mth.abs(pos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(pos.z - playerPosZ) > chunkRange || POS.contains(pos)) {
             return 0;
         }
+        var stopwatch = Stopwatch.createStarted();
         try {
             return calculateChunk(minecraft.level.getChunkSource().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), minecraft.level, pos, context);
         } catch (Throwable throwable) {
             LogManager.getLogger().throwing(throwable);
+        } finally {
+            System.out.println(stopwatch.stop());
         }
         return 0;
     }
     
     private int calculateChunk(LevelChunk chunk, Level world, CubicChunkPos chunkPos, CollisionContext collisionContext) {
         if (world != null && chunk != null) {
-            Long2ByteMap chunkData = new Long2ByteOpenHashMap();
             var block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
             var sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
-            var down = new BlockPos.MutableBlockPos();
+            Long2ByteMap chunkData = new Long2ByteOpenHashMap();
             var count = 0;
-            for (var pos : BlockPos.betweenClosed(chunkPos.getMinBlockX(), chunkPos.getMinBlockY(), chunkPos.getMinBlockZ(), chunkPos.getMaxBlockX(), chunkPos.getMaxBlockY(), chunkPos.getMaxBlockZ())) {
-                down.setWithOffset(pos, 0, -1, 0);
-                count++;
-                if (LightOverlay.showNumber) {
-                    var level = getCrossLevel(pos, down, chunk, block, collisionContext);
-                    if (level >= 0) {
-                        chunkData.put(pos.asLong(), (byte) level);
-                    }
-                } else {
-                    var biome = !LightOverlay.mushroom ? world.getBiome(pos) : null;
-                    var type = getCrossType(pos, biome, down, chunk, block, sky, collisionContext);
-                    if (type != LightOverlay.CROSS_NONE) {
-                        chunkData.put(pos.asLong(), type);
-                    }
-                }
-            }
+            var sections = ((LevelChunkAccess) chunk).lightoverlay_getSections();
+            var firstSectionIndex = chunkPos.y << 1 - chunk.getMinSection();
+            calculateSection(chunkData, block, sky, world, chunk, sections, firstSectionIndex, chunkPos, 0, collisionContext);
+            calculateSection(chunkData, block, sky, world, chunk, sections, firstSectionIndex + 1, chunkPos, 16, collisionContext);
             CHUNK_MAP.put(chunkPos, chunkData);
             return count;
         } else {
@@ -235,14 +243,51 @@ public class LightOverlayTicker {
         }
     }
     
-    public byte getCrossType(BlockPos pos, Biome biome, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
-        var blockBelowState = world.getBlockState(down);
-        var blockUpperState = world.getBlockState(pos);
-        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
+    private void calculateSection(Long2ByteMap chunkData, LayerLightEventListener block, LayerLightEventListener sky, Level world, LevelChunk chunk, LevelChunkSection[] sections,
+            int sectionIndex, CubicChunkPos chunkPos, int yOffset, CollisionContext collisionContext) {
+        if (sectionIndex >= 0 && sectionIndex < sections.length) {
+            var section = sections[sectionIndex];
+            if (!LevelChunkSection.isEmpty(section)) {
+                var startingYBelow = chunkPos.getMinBlockY() - 1 + yOffset;
+                var skipOneLayer = startingYBelow < world.getMinBuildHeight();
+                for (var x = 0; x < 16; x++) {
+                    for (var z = 0; z < 16; z++) {
+                        var lastDownPos = new BlockPos.MutableBlockPos(chunkPos.getMinBlockX() + x, startingYBelow, chunkPos.getMinBlockZ() + z);
+                        var lastDown = skipOneLayer ? null : chunk.getBlockState(lastDownPos);
+                        var currentPos = new BlockPos.MutableBlockPos(lastDownPos.getX(), lastDownPos.getY() + 1, lastDownPos.getZ());
+                        for (var y = 0; y < 16; y++) {
+                            var current = section.getBlockState(x, y, z);
+                            if (lastDown != null) {
+                                if (LightOverlay.showNumber) {
+                                    var level = getCrossLevel(current, lastDown, currentPos, lastDownPos, chunk, block, collisionContext);
+                                    if (level >= 0) {
+                                        chunkData.put(currentPos.asLong(), (byte) level);
+                                    }
+                                } else {
+                                    var type = getCrossType(current, lastDown, currentPos, lastDownPos, chunk, block, sky, collisionContext);
+                                    if (type != LightOverlay.CROSS_NONE) {
+                                        chunkData.put(currentPos.asLong(), type);
+                                    }
+                                }
+                            }
+                            lastDown = current;
+                            lastDownPos.set(currentPos);
+                            currentPos.move(0, 1, 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    public byte getCrossType(BlockState blockUpperState, BlockState blockBelowState, BlockPos pos, BlockPos down, BlockGetter world,
+            LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
         if (!LightOverlay.underwater && !blockUpperState.getFluidState().isEmpty())
             return LightOverlay.CROSS_NONE;
+        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
+        var upperCollisionShapeFace = upperCollisionShape.getFaceShape(Direction.UP);
         // Check if the outline is full
-        if (Block.isFaceFull(upperCollisionShape, Direction.UP))
+        if (upperCollisionShapeFace == Shapes.block() || Block.isShapeFullBlock(upperCollisionShapeFace))
             return LightOverlay.CROSS_NONE;
         // TODO: Not to hard code no redstone
         if (blockUpperState.isSignalSource())
@@ -255,8 +300,6 @@ public class LightOverlayTicker {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
             return LightOverlay.CROSS_NONE;
-        if (!LightOverlay.mushroom && Biome.BiomeCategory.MUSHROOM == biome.getBiomeCategory())
-            return LightOverlay.CROSS_NONE;
         var blockLightLevel = block.getLightValue(pos);
         var skyLightLevel = sky.getLightValue(pos);
         if (blockLightLevel > LightOverlay.higherCrossLevel)
@@ -266,18 +309,16 @@ public class LightOverlayTicker {
         return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ? LightOverlay.CROSS_SECONDARY : LightOverlay.CROSS_RED;
     }
     
-    public static int getCrossLevel(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener view, CollisionContext collisionContext) {
-        var blockBelowState = world.getBlockState(down);
-        var blockUpperState = world.getBlockState(pos);
-        var collisionShape = blockBelowState.getCollisionShape(world, down, collisionContext);
-        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, collisionContext);
+    public int getCrossLevel(BlockState blockUpperState, BlockState blockBelowState, BlockPos pos, BlockPos down, BlockGetter world,
+            LayerLightEventListener view, CollisionContext collisionContext) {
         if (!LightOverlay.underwater && !blockUpperState.getFluidState().isEmpty())
             return -1;
         if (!blockBelowState.getFluidState().isEmpty())
             return -1;
         if (blockBelowState.isAir())
             return -1;
-        if (Block.isFaceFull(upperCollisionShape, Direction.DOWN))
+        var upperCollisionShape = blockUpperState.getCollisionShape(world, pos, collisionContext).getFaceShape(Direction.DOWN);
+        if (upperCollisionShape == Shapes.block() || Block.isShapeFullBlock(upperCollisionShape))
             return -1;
         return view.getLightValue(pos);
     }

@@ -26,7 +26,6 @@ public class LightOverlay {
     public static boolean caching = false;
     public static boolean showNumber = false;
     public static boolean underwater = false;
-    public static boolean mushroom = false;
     public static float lineWidth = 1.0F;
     public static int yellowColor = 0xFFFF00, redColor = 0xFF0000, secondaryColor = 0x0000FF;
     public static File configFile;
@@ -97,7 +96,6 @@ public class LightOverlay {
             caching = ((String) properties.computeIfAbsent("caching", a -> "false")).equalsIgnoreCase("true");
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
-            mushroom = ((String) properties.computeIfAbsent("mushroom", a -> "false")).equalsIgnoreCase("true");
             lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
             {
                 int r, g, b;
@@ -133,7 +131,6 @@ public class LightOverlay {
             caching = false;
             showNumber = false;
             underwater = false;
-            mushroom = false;
             try {
                 saveConfig(file);
             } catch (IOException ex) {
@@ -162,8 +159,6 @@ public class LightOverlay {
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
         fos.write(("underwater=" + underwater).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("mushroom=" + mushroom).getBytes());
         fos.write("\n".getBytes());
         fos.write(("lineWidth=" + FORMAT.format(lineWidth)).getBytes());
         fos.write("\n".getBytes());
