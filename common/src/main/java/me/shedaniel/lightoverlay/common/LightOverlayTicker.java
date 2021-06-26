@@ -276,6 +276,12 @@ public class LightOverlayTicker {
             return -1;
         if (blockBelow instanceof StairBlock && blockBelowState.getValue(StairBlock.HALF) == Half.BOTTOM)
             return -1;
+        if (blockBelow instanceof FenceBlock
+                || blockBelow instanceof FenceGateBlock
+                || blockBelow instanceof WallBlock
+        )
+            return -1;
+
         return view.getLightValue(pos);
     }
 }
