@@ -20,6 +20,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -272,6 +273,8 @@ public class LightOverlayTicker {
         if (collisionShape.isEmpty())
             return -1;
         if (blockBelow instanceof SlabBlock && blockBelowState.getValue(SlabBlock.TYPE) == SlabType.BOTTOM)
+            return -1;
+        if (blockBelow instanceof StairBlock && blockBelowState.getValue(StairBlock.HALF) == Half.BOTTOM)
             return -1;
         return view.getLightValue(pos);
     }
