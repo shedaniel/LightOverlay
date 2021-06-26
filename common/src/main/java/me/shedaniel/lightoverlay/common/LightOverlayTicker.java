@@ -267,6 +267,8 @@ public class LightOverlayTicker {
             return -1;
         if (Block.isFaceFull(upperCollisionShape, Direction.DOWN))
             return -1;
+        if (collisionShape.isEmpty())
+            return -1;
         return view.getLightValue(pos);
     }
 }
