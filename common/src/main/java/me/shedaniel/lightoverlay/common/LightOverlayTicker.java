@@ -18,8 +18,9 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LayerLightEventListener;
@@ -256,6 +257,7 @@ public class LightOverlayTicker {
     
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener view, CollisionContext collisionContext) {
         BlockState blockBelowState = world.getBlockState(down);
+        Block blockBelow = blockBelowState.getBlock();
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape collisionShape = blockBelowState.getCollisionShape(world, down, collisionContext);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, collisionContext);
@@ -268,6 +270,8 @@ public class LightOverlayTicker {
         if (Block.isFaceFull(upperCollisionShape, Direction.DOWN))
             return -1;
         if (collisionShape.isEmpty())
+            return -1;
+        if (blockBelow instanceof SlabBlock && blockBelowState.getValue(SlabBlock.TYPE) == SlabType.BOTTOM)
             return -1;
         return view.getLightValue(pos);
     }
