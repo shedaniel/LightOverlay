@@ -272,6 +272,8 @@ public class LightOverlayTicker {
             return -1;
         if (collisionShape.isEmpty())
             return -1;
+        if (!blockBelowState.canOcclude())
+            return -1;
         if (blockBelow instanceof SlabBlock && blockBelowState.getValue(SlabBlock.TYPE) == SlabType.BOTTOM)
             return -1;
         if (blockBelow instanceof StairBlock && blockBelowState.getValue(StairBlock.HALF) == Half.BOTTOM)
