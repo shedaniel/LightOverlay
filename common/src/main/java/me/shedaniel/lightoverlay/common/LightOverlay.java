@@ -23,7 +23,6 @@ public class LightOverlay {
     public static int secondaryLevel = -1;
     public static int lowerCrossLevel = -1;
     public static int higherCrossLevel = -1;
-    public static boolean caching = false;
     public static boolean showNumber = false;
     public static boolean underwater = false;
     public static float lineWidth = 1.0F;
@@ -47,11 +46,7 @@ public class LightOverlay {
         
         ClientGuiEvent.DEBUG_TEXT_LEFT.register(list -> {
             if (enabled) {
-                if (caching) {
                     list.add(String.format("[Light Overlay] Chunks to queue: %02d; %d Blocks Scanned", ticker.POS.size(), blocksScanned));
-                } else {
-                    list.add(String.format("[Light Overlay] Enabled; %d Blocks Scanned", blocksScanned));
-                }
             } else {
                 list.add("[Light Overlay] Disabled");
             }
@@ -93,7 +88,6 @@ public class LightOverlay {
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
             secondaryLevel = Integer.parseInt((String) properties.computeIfAbsent("secondaryLevel", a -> "-1"));
-            caching = ((String) properties.computeIfAbsent("caching", a -> "false")).equalsIgnoreCase("true");
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
             lineWidth = Float.parseFloat((String) properties.computeIfAbsent("lineWidth", a -> "1"));
@@ -128,7 +122,6 @@ public class LightOverlay {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
             secondaryColor = 0x0000FF;
-            caching = false;
             showNumber = false;
             underwater = false;
             try {
@@ -153,8 +146,6 @@ public class LightOverlay {
         fos.write(("crossLevel=" + crossLevel).getBytes());
         fos.write("\n".getBytes());
         fos.write(("secondaryLevel=" + secondaryLevel).getBytes());
-        fos.write("\n".getBytes());
-        fos.write(("caching=" + caching).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());

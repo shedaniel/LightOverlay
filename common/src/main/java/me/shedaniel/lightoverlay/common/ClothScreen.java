@@ -17,8 +17,7 @@ public class ClothScreen {
         var eb = builder.entryBuilder();
         var general = builder.getOrCreateCategory(new TranslatableComponent("config.lightoverlay.general"));
         general.addEntry(eb.startTextDescription(Component.nullToEmpty("§7" + I18n.get("description.lightoverlay.caching"))).build());
-        general.addEntry(eb.startBooleanToggle(new TranslatableComponent("config.lightoverlay.caching"), LightOverlay.caching).setDefaultValue(false).setSaveConsumer(bool -> LightOverlay.caching = bool).build());
-        general.addEntry(eb.startIntSlider(new TranslatableComponent("config.lightoverlay.reach"), LightOverlay.reach, 1, 64).setDefaultValue(12).setTextGetter(integer -> Component.nullToEmpty("Reach: " + integer + " Blocks")).setSaveConsumer(integer -> LightOverlay.reach = integer).build());
+        general.addEntry(eb.startIntSlider(new TranslatableComponent("config.lightoverlay.reach"), LightOverlay.reach, 1, 512).setDefaultValue(12).setTextGetter(integer -> Component.nullToEmpty("Reach: " + integer + " Blocks")).setSaveConsumer(integer -> LightOverlay.reach = integer).build());
         var crossLevel = eb.startIntSlider(new TranslatableComponent("config.lightoverlay.crossLevel"), LightOverlay.crossLevel, 0, 15).setDefaultValue(7).setTextGetter(integer -> Component.nullToEmpty("Cross Level: " + integer)).setSaveConsumer(integer -> LightOverlay.crossLevel = integer).build();
         general.addEntry(crossLevel);
         general.addEntry(eb.startIntSlider(new TranslatableComponent("config.lightoverlay.secondaryLevel"), LightOverlay.secondaryLevel, -1, 15)
