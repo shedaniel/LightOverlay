@@ -9,5 +9,5 @@ dependencies {
 }
 
 architectury {
-    common(false)
+    common()
 }

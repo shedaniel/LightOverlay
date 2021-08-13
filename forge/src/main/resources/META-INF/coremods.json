@@ -1,0 +1,5 @@
+{
+  "Connection": "META-INF/Connection.js",
+  "DebugRenderer": "META-INF/DebugRenderer.js",
+  "LevelRenderer": "META-INF/LevelRenderer.js"
+}

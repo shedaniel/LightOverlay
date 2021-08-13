@@ -113,7 +113,6 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
         builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
     
-        System.out.println(ticker.CHUNK_MAP.size());
         for (Map.Entry<CubicChunkPos, Long2ByteMap> entry : ticker.CHUNK_MAP.entrySet()) {
             CubicChunkPos chunkPos = entry.getKey();
             if (LightOverlay.caching && (Mth.abs(chunkPos.x - playerPosX) > chunkRange || Mth.abs(chunkPos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(chunkPos.z - playerPosZ) > chunkRange)) {

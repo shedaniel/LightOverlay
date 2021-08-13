@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
 }
 
 configurations {
@@ -9,10 +9,6 @@ configurations {
 architectury {
     platformSetupLoomIde()
     forge()
-}
-
-loom {
-    mixinConfig "lightoverlay-forge.mixins.json"
 }
 
 processResources {
@@ -26,8 +22,8 @@ dependencies {
     minecraft("com.mojang:minecraft:${rootProject.architectury.minecraft}")
     mappings(minecraft.officialMojangMappings())
     forge("net.minecraftforge:forge:${rootProject.architectury.minecraft}-${project.forge_version}")
-    modCompile("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
-    modCompile("me.shedaniel:architectury:${rootProject.architectury_version}:forge")
+    modImplementation("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
+    modImplementation("dev.architectury:architectury-forge:${rootProject.architectury_version}")
 
     implementation(project(path: ":common")) {
         transitive = false
