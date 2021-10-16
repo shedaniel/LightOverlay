@@ -9,5 +9,13 @@ dependencies {
 }
 
 architectury {
-    common()
+    common(false)
+}
+
+configurations {
+    dev
+}
+
+artifacts {
+    dev(jar)
 }
