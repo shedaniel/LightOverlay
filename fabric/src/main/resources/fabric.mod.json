@@ -27,9 +27,6 @@
     "lightoverlay.mixins.json"
   ],
   "accessWidener": "lightoverlay.accesswidener",
-  "custom": {
-    "modmenu:clientsideOnly": true
-  },
   "depends": {
     "fabric": ">=0.29.1",
     "architectury": ">=2-",
