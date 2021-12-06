@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 public class LightOverlay {
     public static final DecimalFormat FORMAT = new DecimalFormat("#.#");
     public static int reach = 12;
-    public static int crossLevel = 7;
-    public static int secondaryLevel = -1;
+    public static int crossLevel = 0;
+    public static int secondaryLevel = 7;
     public static int lowerCrossLevel = -1;
     public static int higherCrossLevel = -1;
     public static boolean caching = false;
@@ -96,8 +96,8 @@ public class LightOverlay {
             properties.load(fis);
             fis.close();
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
-            crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "7"));
-            secondaryLevel = Integer.parseInt((String) properties.computeIfAbsent("secondaryLevel", a -> "-1"));
+            crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "0"));
+            secondaryLevel = Integer.parseInt((String) properties.computeIfAbsent("secondaryLevel", a -> "7"));
             caching = ((String) properties.computeIfAbsent("caching", a -> "false")).equalsIgnoreCase("true");
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
@@ -128,8 +128,8 @@ public class LightOverlay {
         } catch (Exception e) {
             e.printStackTrace();
             reach = 12;
-            crossLevel = 7;
-            secondaryLevel = -1;
+            crossLevel = 0;
+            secondaryLevel = 7;
             lineWidth = 1.0F;
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
@@ -144,7 +144,13 @@ public class LightOverlay {
                 ex.printStackTrace();
             }
         }
-        if (secondaryLevel >= crossLevel) System.err.println("[Light Overlay] Secondary Level is higher than Cross Level");
+        if (secondaryLevel >= crossLevel) {
+            higherCross = CROSS_SECONDARY;
+            lowerCross = CROSS_YELLOW;
+        } else {
+            higherCross = CROSS_YELLOW;
+            lowerCross = CROSS_SECONDARY;
+        }
         lowerCrossLevel = Math.min(crossLevel, secondaryLevel);
         higherCrossLevel = Math.max(crossLevel, secondaryLevel);
         ticker.CHUNK_MAP.clear();
@@ -207,5 +213,7 @@ public class LightOverlay {
     public static final byte CROSS_YELLOW = 0;
     public static final byte CROSS_RED = 1;
     public static final byte CROSS_SECONDARY = 2;
-    public static final byte CROSS_NONE = 2;
+    public static final byte CROSS_NONE = 3;
+    public static byte higherCross = CROSS_YELLOW;
+    public static byte lowerCross = CROSS_SECONDARY;
 }

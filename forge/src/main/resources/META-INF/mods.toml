@@ -15,13 +15,13 @@ To provide users with NEI-like light overlay.
 [[dependencies.lightoverlay]]
 modId = "cloth_config"
 mandatory = true
-versionRange = "[5.0.36,)"
+versionRange = "[6,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.lightoverlay]]
 modId = "architectury"
 mandatory = true
-versionRange = "[2.3.22,)"
+versionRange = "[3,)"
 ordering = "NONE"
 side = "CLIENT"

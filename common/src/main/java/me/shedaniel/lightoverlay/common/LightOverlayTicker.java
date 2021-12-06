@@ -250,8 +250,9 @@ public class LightOverlayTicker {
         if (blockLightLevel > LightOverlay.higherCrossLevel)
             return LightOverlay.CROSS_NONE;
         if (skyLightLevel > LightOverlay.higherCrossLevel)
-            return LightOverlay.CROSS_YELLOW;
-        return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ? LightOverlay.CROSS_SECONDARY : LightOverlay.CROSS_RED;
+            return LightOverlay.higherCross;
+        return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ? 
+                LightOverlay.lowerCross : LightOverlay.CROSS_RED;
     }
     
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener view, CollisionContext collisionContext) {

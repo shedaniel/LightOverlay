@@ -11,6 +11,12 @@ architectury {
     forge()
 }
 
+loom {
+    forge {
+        mixinConfig "lightoverlay-forge.mixins.json"
+    }
+}
+
 processResources {
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
@@ -25,10 +31,10 @@ dependencies {
     modImplementation("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
     modImplementation("dev.architectury:architectury-forge:${rootProject.architectury_version}")
 
-    implementation(project(path: ":common")) {
+    implementation(project(path: ":common", configuration: "namedElements")) {
         transitive = false
     }
-    developmentForge(project(path: ":common")) {
+    developmentForge(project(path: ":common", configuration: "namedElements")) {
         transitive = false
     }
     shadow(project(path: ":common", configuration: "transformProductionForge")) {

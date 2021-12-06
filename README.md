@@ -9,4 +9,4 @@ Forge: `gradlew :forge:runClient`
 Or use the run configs if you are using IntelliJ IDEA.
 
 # Compiling
-Run `gradlew buildMerged`, and the merged jar will be in `build/libs/`.
+Run `gradlew build`, and the merged jar will be in `fabric|forge/build/libs/`.
