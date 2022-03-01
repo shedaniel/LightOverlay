@@ -12,10 +12,6 @@ architectury {
     common(false)
 }
 
-configurations {
-    dev
-}
-
-artifacts {
-    dev(jar)
+transformProductionFabric {
+    dependsOn(prepareRemapJar)
 }
