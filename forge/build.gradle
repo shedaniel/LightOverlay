@@ -26,7 +26,7 @@ processResources {
 
 dependencies {
     minecraft("com.mojang:minecraft:${rootProject.architectury.minecraft}")
-    mappings(minecraft.officialMojangMappings())
+    mappings(loom.officialMojangMappings())
     forge("net.minecraftforge:forge:${rootProject.architectury.minecraft}-${project.forge_version}")
     modImplementation("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
     modImplementation("dev.architectury:architectury-forge:${rootProject.architectury_version}")

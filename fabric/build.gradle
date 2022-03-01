@@ -2,8 +2,8 @@ plugins {
     id "com.github.johnrengelman.shadow" version "7.0.0"
 }
 
-minecraft {
-    accessWidener = file("src/main/resources/lightoverlay.accesswidener")
+loom {
+    accessWidenerPath = file("src/main/resources/lightoverlay.accesswidener")
 }
 
 architectury {
@@ -28,7 +28,7 @@ processResources {
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.architectury.minecraft}"
-    mappings minecraft.officialMojangMappings()
+    mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"

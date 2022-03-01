@@ -4,3 +4,11 @@ accessible field net/minecraft/client/renderer/culling/Frustum camX D
 accessible field net/minecraft/client/renderer/culling/Frustum camY D
 accessible field net/minecraft/client/renderer/culling/Frustum camZ D
 accessible field net/minecraft/client/renderer/culling/Frustum frustumData [Lcom/mojang/math/Vector4f;
+accessible field net/minecraft/world/entity/EntityType factory Lnet/minecraft/world/entity/EntityType$EntityFactory;
+accessible field net/minecraft/world/entity/EntityType category Lnet/minecraft/world/entity/MobCategory;
+accessible field net/minecraft/world/entity/EntityType immuneTo Lcom/google/common/collect/ImmutableSet;
+accessible field net/minecraft/world/entity/EntityType dimensions Lnet/minecraft/world/entity/EntityDimensions;
+mutable field net/minecraft/world/entity/EntityType factory Lnet/minecraft/world/entity/EntityType$EntityFactory;
+mutable field net/minecraft/world/entity/EntityType category Lnet/minecraft/world/entity/MobCategory;
+mutable field net/minecraft/world/entity/EntityType immuneTo Lcom/google/common/collect/ImmutableSet;
+mutable field net/minecraft/world/entity/EntityType dimensions Lnet/minecraft/world/entity/EntityDimensions;

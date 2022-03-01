@@ -2,6 +2,7 @@ package me.shedaniel.lightoverlay.common;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Maps;
+import dev.architectury.injectables.annotations.ExpectPlatform;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -9,11 +10,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -26,7 +27,9 @@ import net.minecraft.world.level.lighting.LayerLightEventListener;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.logging.log4j.LogManager;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -44,8 +47,25 @@ public class LightOverlayTicker {
     public final Set<CubicChunkPos> POS = Collections.synchronizedSet(new HashSet<>());
     public final Set<CubicChunkPos> CALCULATING_POS = Collections.synchronizedSet(new HashSet<>());
     public final Map<CubicChunkPos, Long2ByteMap> CHUNK_MAP = Maps.newConcurrentMap();
-    private static final Supplier<EntityType<Entity>> TESTING_ENTITY_TYPE = Suppliers.memoize(() ->
-            EntityType.Builder.createNothing(MobCategory.MONSTER).sized(0f, 0f).noSave().build(null));
+    private static final Supplier<EntityType<Entity>> TESTING_ENTITY_TYPE = Suppliers.memoize(() -> {
+        // get unsafe
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            Unsafe unsafe = (Unsafe) f.get(null);
+            
+            // instantiate entity type
+            EntityType<Entity> type = (EntityType<Entity>) unsafe.allocateInstance(EntityType.class);
+            return type;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    });
+    
+    @ExpectPlatform
+    public static void populateEntityType(EntityType<Entity> type) {
+        throw new AssertionError();
+    }
     
     public void queueChunk(CubicChunkPos pos) {
         if (LightOverlay.enabled && LightOverlay.caching && !CALCULATING_POS.contains(pos)) {
@@ -89,7 +109,7 @@ public class LightOverlayTicker {
                                 chunkData.put(blockPos.asLong(), (byte) level);
                             }
                         } else {
-                            Biome biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
+                            Holder<Biome> biome = !LightOverlay.mushroom ? world.getBiome(blockPos) : null;
                             byte type = getCrossType(blockPos, biome, downPos, world, block, sky, collisionContext);
                             if (type != LightOverlay.CROSS_NONE) {
                                 chunkData.put(blockPos.asLong(), type);
@@ -210,7 +230,7 @@ public class LightOverlayTicker {
                         chunkData.put(pos.asLong(), (byte) level);
                     }
                 } else {
-                    Biome biome = !LightOverlay.mushroom ? world.getBiome(pos) : null;
+                    Holder<Biome> biome = !LightOverlay.mushroom ? world.getBiome(pos) : null;
                     byte type = getCrossType(pos, biome, down, chunk, block, sky, collisionContext);
                     if (type != LightOverlay.CROSS_NONE) {
                         chunkData.put(pos.asLong(), type);
@@ -223,7 +243,7 @@ public class LightOverlayTicker {
         }
     }
     
-    public byte getCrossType(BlockPos pos, Biome biome, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
+    public byte getCrossType(BlockPos pos, Holder<Biome> biome, BlockPos down, BlockGetter world, LayerLightEventListener block, LayerLightEventListener sky, CollisionContext entityContext) {
         BlockState blockBelowState = world.getBlockState(down);
         BlockState blockUpperState = world.getBlockState(pos);
         VoxelShape upperCollisionShape = blockUpperState.getCollisionShape(world, pos, entityContext);
@@ -243,7 +263,7 @@ public class LightOverlayTicker {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
             return LightOverlay.CROSS_NONE;
-        if (!LightOverlay.mushroom && Biome.BiomeCategory.MUSHROOM == biome.getBiomeCategory())
+        if (!LightOverlay.mushroom && Biome.BiomeCategory.MUSHROOM == Biome.getBiomeCategory(biome))
             return LightOverlay.CROSS_NONE;
         int blockLightLevel = block.getLightValue(pos);
         int skyLightLevel = sky.getLightValue(pos);
@@ -251,7 +271,7 @@ public class LightOverlayTicker {
             return LightOverlay.CROSS_NONE;
         if (skyLightLevel > LightOverlay.higherCrossLevel)
             return LightOverlay.higherCross;
-        return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ? 
+        return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ?
                 LightOverlay.lowerCross : LightOverlay.CROSS_RED;
     }
     
