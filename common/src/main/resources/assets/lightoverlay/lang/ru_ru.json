@@ -1,0 +1,20 @@
+{
+  "key.lightoverlay.category": "Наложение освещения",
+  "key.lightoverlay.enable_overlay": "Вкл/выкл наложение освещения",
+  "description.lightoverlay.caching": "Рекомендуется кэширование, если досягаемость больше чем 16, если ты запускаешь на картошке.",
+  "config.lightoverlay.general": "Общее",
+  "config.lightoverlay.reach": "Досягаемость:",
+  "config.lightoverlay.caching": "Кэширование:",
+  "config.lightoverlay.crossLevel": "Уровень освещения:",
+  "config.lightoverlay.secondaryLevel": "Добавочный уровень освещения:",
+  "config.lightoverlay.showNumber": "Вместо этого показать число:",
+  "config.lightoverlay.smoothLines": "Сглаженные линии:",
+  "config.lightoverlay.underwater": "Отобразить под водой:",
+  "config.lightoverlay.lineWidth": "Ширина линии:",
+  "config.lightoverlay.yellowColor": "Жёлтый цвет:",
+  "config.lightoverlay.secondaryColor": "Добавочный цвет:",
+  "config.lightoverlay.redColor": "Красный цвет:",
+  "config.lightoverlay.invalidColor": "Недопустимый цвет",
+  "config.lightoverlay.mushroom": "Отобразить в грибных биомах:",
+  "config.lightoverlay.useListWhileCaching": "Использовать glList при кэшировании:"
+}
