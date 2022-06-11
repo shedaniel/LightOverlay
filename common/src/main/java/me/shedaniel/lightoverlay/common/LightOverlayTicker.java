@@ -19,6 +19,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -55,8 +56,7 @@ public class LightOverlayTicker {
             Unsafe unsafe = (Unsafe) f.get(null);
             
             // instantiate entity type
-            EntityType<Entity> type = (EntityType<Entity>) unsafe.allocateInstance(EntityType.class);
-            return type;
+            return (EntityType<Entity>) unsafe.allocateInstance(EntityType.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -94,6 +94,7 @@ public class LightOverlayTicker {
                     POS.clear();
                     CHUNK_MAP.clear();
                     BlockPos playerPos = player.blockPosition();
+                    assert world != null;
                     LayerLightEventListener block = world.getLightEngine().getLayerListener(LightLayer.BLOCK);
                     LayerLightEventListener sky = LightOverlay.showNumber ? null : world.getLightEngine().getLayerListener(LightLayer.SKY);
                     BlockPos.MutableBlockPos downPos = new BlockPos.MutableBlockPos();
@@ -117,6 +118,7 @@ public class LightOverlayTicker {
                         }
                     }
                 } else {
+                    assert Minecraft.getInstance().level != null;
                     var height = Mth.ceil(Minecraft.getInstance().level.getHeight() / 32.0);
                     var start = Math.floorDiv(Minecraft.getInstance().level.getMinBuildHeight(), 32);
                     int playerPosX = ((int) player.getX()) >> 4;
@@ -188,7 +190,7 @@ public class LightOverlayTicker {
                                 int playerPosX1 = ((int) minecraft.player.getX()) >> 4;
                                 int playerPosY1 = ((int) minecraft.player.getY()) >> 5;
                                 int playerPosZ1 = ((int) minecraft.player.getZ()) >> 4;
-                                if (finalC1 != null) processChunk(finalC1, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
+                                processChunk(finalC1, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
                                 if (finalC2 != null) processChunk(finalC2, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
                                 if (finalC3 != null) processChunk(finalC3, playerPosX1, playerPosY1, playerPosZ1, collisionContext);
                             });
@@ -211,6 +213,7 @@ public class LightOverlayTicker {
             return;
         }
         try {
+            assert minecraft.level != null;
             calculateChunk(minecraft.level.getChunkSource().getChunk(pos.x, pos.z, ChunkStatus.FULL, false), minecraft.level, pos, context);
         } catch (Throwable throwable) {
             LogManager.getLogger().throwing(throwable);
@@ -263,7 +266,7 @@ public class LightOverlayTicker {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
             return LightOverlay.CROSS_NONE;
-        if (!LightOverlay.mushroom && Biome.BiomeCategory.MUSHROOM == Biome.getBiomeCategory(biome))
+        if (!LightOverlay.mushroom && biome.is(Biomes.MUSHROOM_FIELDS))
             return LightOverlay.CROSS_NONE;
         int blockLightLevel = block.getLightValue(pos);
         int skyLightLevel = sky.getLightValue(pos);
