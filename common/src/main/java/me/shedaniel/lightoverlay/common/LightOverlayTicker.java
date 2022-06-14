@@ -266,7 +266,7 @@ public class LightOverlayTicker {
         // Check block state allow spawning (excludes bedrock and barriers automatically)
         if (!blockBelowState.isValidSpawn(world, down, TESTING_ENTITY_TYPE.get()))
             return LightOverlay.CROSS_NONE;
-        if (!LightOverlay.mushroom && biome.is(Biomes.MUSHROOM_FIELDS))
+        if (!LightOverlay.mushroom && isMushroom(biome))
             return LightOverlay.CROSS_NONE;
         int blockLightLevel = block.getLightValue(pos);
         int skyLightLevel = sky.getLightValue(pos);
@@ -276,6 +276,11 @@ public class LightOverlayTicker {
             return LightOverlay.higherCross;
         return LightOverlay.lowerCrossLevel >= 0 && blockLightLevel > LightOverlay.lowerCrossLevel ?
                 LightOverlay.lowerCross : LightOverlay.CROSS_RED;
+    }
+    
+    @ExpectPlatform
+    private static boolean isMushroom(Holder<Biome> biome) {
+        throw new AssertionError();
     }
     
     public static int getCrossLevel(BlockPos pos, BlockPos down, BlockGetter world, LayerLightEventListener view, CollisionContext collisionContext) {
