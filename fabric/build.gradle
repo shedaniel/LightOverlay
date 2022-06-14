@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.0.0"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 loom {
@@ -59,7 +59,7 @@ prepareRemapJar {
 
 remapJar {
     dependsOn(shadowJar)
-    input.set(shadowJar.archivePath)
+    inputFile.set(shadowJar.archivePath)
     classifier null
 }
 

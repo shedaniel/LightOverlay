@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.0.0"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 configurations {
@@ -56,6 +56,6 @@ prepareRemapJar {
 
 remapJar {
     dependsOn(shadowJar)
-    input.set(shadowJar.archivePath)
-    archiveClassifier = "forge"
+    inputFile.set(shadowJar.archivePath)
+    archiveClassifier.set("forge")
 }
