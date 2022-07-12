@@ -25,3 +25,10 @@ mandatory = true
 versionRange = "[3,)"
 ordering = "NONE"
 side = "CLIENT"
+
+[[dependencies.lightoverlay]]
+modId = "forge"
+mandatory = true
+versionRange = "[41.0.94,)"
+ordering = "NONE"
+side = "BOTH"
