@@ -1,0 +1,20 @@
+{
+  "key.lightoverlay.category": "亮度覆盖(Light Overlay)",
+  "key.lightoverlay.enable_overlay": "切换亮度覆盖",
+  "description.lightoverlay.caching": "如果范围超过16或者你的设备性能低建议使用缓存。",
+  "config.lightoverlay.general": "常规",
+  "config.lightoverlay.reach": "范围：",
+  "config.lightoverlay.caching": "缓存：",
+  "config.lightoverlay.crossLevel": "亮度等级：",
+  "config.lightoverlay.secondaryLevel": "次要亮度等级：",
+  "config.lightoverlay.showNumber": "改为显示数字：",
+  "config.lightoverlay.smoothLines": "平滑线条：",
+  "config.lightoverlay.underwater": "显示水下：",
+  "config.lightoverlay.lineWidth": "线宽：",
+  "config.lightoverlay.yellowColor": "黄色：",
+  "config.lightoverlay.secondaryColor": "次要颜色：",
+  "config.lightoverlay.redColor": "红色：",
+  "config.lightoverlay.invalidColor": "颜色无效",
+  "config.lightoverlay.mushroom": "在蘑菇岛生物群系中显示：",
+  "config.lightoverlay.useListWhileCaching": "缓存时使用glList："
+}
