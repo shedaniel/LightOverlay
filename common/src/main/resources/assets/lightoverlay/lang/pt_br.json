@@ -1,0 +1,20 @@
+{
+    "key.lightoverlay.category": "Sobreposição de luz",
+    "key.lightoverlay.enable_overlay": "Alternar sobreposição de luz",
+    "description.lightoverlay.caching": "O armazenamento em cache é recomendado se o alcance estiver acima de 16 ou se você estiver executando em uma batata.",
+    "config.lightoverlay.general": "Geral",
+    "config.lightoverlay.reach": "Alcançar:",
+    "config.lightoverlay.caching": "Caching:",
+    "config.lightoverlay.crossLevel": "Nível de luz:",
+    "config.lightoverlay.secondaryLevel": "Nível de Luz Secundário:",
+    "config.lightoverlay.showNumber": "Mostrar número em vez disso:",
+    "config.lightoverlay.smoothLines": "Linhas suaves:",
+    "config.lightoverlay.underwater": "Exibir debaixo d'água:",
+    "config.lightoverlay.lineWidth": "Espessura da linha:",
+    "config.lightoverlay.yellowColor": "Cor amarela:",
+    "config.lightoverlay.secondaryColor": "Cor Secundária:",
+    "config.lightoverlay.redColor": "Cor vermelha:",
+    "config.lightoverlay.invalidColor": "Cor inválida",
+    "config.lightoverlay.mushroom": "Exibição em biomas de cogumelos:",
+    "config.lightoverlay.useListWhileCaching": "Use glList durante o armazenamento em cache:"
+  }
