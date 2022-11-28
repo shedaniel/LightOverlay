@@ -5,12 +5,15 @@ import com.google.common.collect.Maps;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -74,9 +77,11 @@ public class LightOverlayTicker {
     }
     
     public void tick(Minecraft minecraft) {
-        while (LightOverlay.enableOverlay.consumeClick())
+        while (LightOverlay.enableOverlay.consumeClick()) {
             LightOverlay.enabled = !LightOverlay.enabled;
-        
+            minecraft.gui.setOverlayMessage(Component.translatable("overlay.lightoverlay").append(": ").append(LightOverlay.enabled ? Component.literal(CommonComponents.OPTION_ON.getString()).withStyle(ChatFormatting.GREEN) : Component.literal(CommonComponents.OPTION_OFF.getString()).withStyle(ChatFormatting.RED)), false);
+        }
+
         try {
             ticks++;
             if (minecraft.player == null || !LightOverlay.enabled) {
