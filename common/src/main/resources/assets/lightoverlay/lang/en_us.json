@@ -2,6 +2,7 @@
   "key.lightoverlay.category": "Light Overlay",
   "key.lightoverlay.enable_overlay": "Toggle Light Overlay",
   "description.lightoverlay.caching": "Caching is recommended if the reach is above 16 or if you are running on a potato.",
+  "overlay.lightoverlay": "Light Overlay",
   "config.lightoverlay.general": "General",
   "config.lightoverlay.reach": "Reach:",
   "config.lightoverlay.caching": "Caching:",
