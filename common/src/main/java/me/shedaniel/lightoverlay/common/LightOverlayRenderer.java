@@ -1,11 +1,7 @@
 package me.shedaniel.lightoverlay.common;
 
-import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import dev.architectury.injectables.targets.ArchitecturyTarget;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -18,15 +14,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class LightOverlayRenderer implements Consumer<PoseStack> {
     private final Minecraft minecraft = Minecraft.getInstance();
@@ -93,7 +88,7 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
         double cameraZ = camera.getPosition().z;
         poses.pushPose();
         poses.translate(pos.getX() + 0.5 - cameraX, pos.getY() - cameraY + 0.005, pos.getZ() + 0.5 - cameraZ);
-        poses.mulPose(Vector3f.XP.rotationDegrees(90));
+        poses.mulPose(new Quaternionf().fromAxisAngleDeg(1, 0, 0, 90));
 //        poses.glNormal3f(0.0F, 1.0F, 0.0F);
         float size = 0.07F;
         poses.scale(-size, -size, size);
@@ -112,7 +107,7 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
         BufferBuilder builder = tesselator.getBuilder();
         builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-    
+        
         for (Map.Entry<CubicChunkPos, Long2ByteMap> entry : ticker.CHUNK_MAP.entrySet()) {
             CubicChunkPos chunkPos = entry.getKey();
             if (LightOverlay.caching && (Mth.abs(chunkPos.x - playerPosX) > chunkRange || Mth.abs(chunkPos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(chunkPos.z - playerPosZ) > chunkRange)) {
@@ -163,20 +158,7 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
         builder.vertex(x + .01, y, z + .99).color(red, green, blue, 255).endVertex();
     }
     
-    private static final Supplier<MethodHandle> IS_FRUSTUM_VISIBLE = Suppliers.memoize(() -> {
-        try {
-            return MethodHandles.lookup().findStatic(Class.forName("me.shedaniel.lightoverlay." + ArchitecturyTarget.getCurrentTarget() + ".LightOverlayImpl"), "isFrustumVisible",
-                    MethodType.methodType(boolean.class, Frustum.class, double.class, double.class, double.class, double.class, double.class, double.class));
-        } catch (NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    });
-    
     public boolean isFrustumVisible(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        try {
-            return frustum == null || (boolean) IS_FRUSTUM_VISIBLE.get().invokeExact(frustum, minX, minY, minZ, maxX, maxY, maxZ);
-        } catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
-        }
+        return frustum.isVisible(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
     }
 }
