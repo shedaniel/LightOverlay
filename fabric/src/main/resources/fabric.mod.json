@@ -27,12 +27,12 @@
     "lightoverlay.mixins.json"
   ],
   "accessWidener": "lightoverlay.accesswidener",
-  "custom": {
-    "modmenu:clientsideOnly": true
-  },
   "depends": {
-    "fabric": ">=0.29.1",
-    "architectury": ">=2-",
-    "cloth-config2": ">=5-"
+    "fabricloader": ">=0.14.11",
+    "fabric-api": "*",
+    "minecraft": "~1.19.3",
+    "java": ">=17",
+    "architectury": ">=7-",
+    "cloth-config2": ">=9-"
   }
 }
