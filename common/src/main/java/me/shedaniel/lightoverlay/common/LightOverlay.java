@@ -98,7 +98,7 @@ public class LightOverlay {
             reach = Integer.parseInt((String) properties.computeIfAbsent("reach", a -> "12"));
             crossLevel = Integer.parseInt((String) properties.computeIfAbsent("crossLevel", a -> "0"));
             secondaryLevel = Integer.parseInt((String) properties.computeIfAbsent("secondaryLevel", a -> "7"));
-            caching = ((String) properties.computeIfAbsent("caching", a -> "false")).equalsIgnoreCase("true");
+            caching = ((String) properties.computeIfAbsent("cachingData", a -> "true")).equalsIgnoreCase("true");
             showNumber = ((String) properties.computeIfAbsent("showNumber", a -> "false")).equalsIgnoreCase("true");
             underwater = ((String) properties.computeIfAbsent("underwater", a -> "false")).equalsIgnoreCase("true");
             mushroom = ((String) properties.computeIfAbsent("mushroom", a -> "false")).equalsIgnoreCase("true");
@@ -134,7 +134,7 @@ public class LightOverlay {
             redColor = 0xFF0000;
             yellowColor = 0xFFFF00;
             secondaryColor = 0x0000FF;
-            caching = false;
+            caching = true;
             showNumber = false;
             underwater = false;
             mushroom = false;
@@ -167,7 +167,7 @@ public class LightOverlay {
         fos.write("\n".getBytes());
         fos.write(("secondaryLevel=" + secondaryLevel).getBytes());
         fos.write("\n".getBytes());
-        fos.write(("caching=" + caching).getBytes());
+        fos.write(("cachingData=" + caching).getBytes());
         fos.write("\n".getBytes());
         fos.write(("showNumber=" + showNumber).getBytes());
         fos.write("\n".getBytes());
