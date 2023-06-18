@@ -10,8 +10,8 @@
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/light-overlay",
-    "sources": "https://github.com/shedaniel/LightOverlay-Fabric",
-    "issues": "https://github.com/shedaniel/LightOverlay-Fabric/issues"
+    "sources": "https://github.com/shedaniel/LightOverlay",
+    "issues": "https://github.com/shedaniel/LightOverlay/issues"
   },
   "entrypoints": {
     "client": [
