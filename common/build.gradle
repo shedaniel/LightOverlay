@@ -9,9 +9,5 @@ dependencies {
 }
 
 architectury {
-    common()
-}
-
-transformProductionFabric {
-    dependsOn(prepareRemapJar)
+    common("fabric", "forge", "neoforge")
 }

@@ -26,7 +26,7 @@ public class LightOverlay {
     public static int secondaryLevel = 7;
     public static int lowerCrossLevel = -1;
     public static int higherCrossLevel = -1;
-    public static boolean caching = false;
+    public static boolean caching = true;
     public static boolean showNumber = false;
     public static boolean underwater = false;
     public static boolean mushroom = false;
