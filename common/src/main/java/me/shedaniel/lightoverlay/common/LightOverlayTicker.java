@@ -36,7 +36,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
 public class LightOverlayTicker {
-    private final Minecraft minecraft = Minecraft.getInstance();
+    // Neoforge fix.
+    private Minecraft minecraft = Minecraft.getInstance();
     private long ticks = 0;
     private static int threadNumber = 0;
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
@@ -73,6 +74,9 @@ public class LightOverlayTicker {
     }
     
     public void tick(Minecraft minecraft) {
+        if (this.minecraft == null) {
+            this.minecraft = Minecraft.getInstance();
+        }
         while (LightOverlay.enableOverlay.consumeClick())
             LightOverlay.enabled = !LightOverlay.enabled;
         
@@ -119,7 +123,7 @@ public class LightOverlayTicker {
                 } else {
                     assert Minecraft.getInstance().level != null;
                     var height = Mth.ceil(Minecraft.getInstance().level.getHeight() / 32.0);
-                    var start = Math.floorDiv(Minecraft.getInstance().level.getMinBuildHeight(), 32);
+                    var start = Math.floorDiv(Minecraft.getInstance().level.getMinSectionY(), 32);
                     int playerPosX = ((int) player.getX()) >> 4;
                     int playerPosY = ((int) player.getY()) >> 5;
                     int playerPosZ = ((int) player.getZ()) >> 4;
