@@ -1,6 +1,7 @@
 package me.shedaniel.lightoverlay.common;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.pipeline.*;
+import com.mojang.blaze3d.platform.*;
 import com.mojang.blaze3d.vertex.*;
 import it.unimi.dsi.fastutil.longs.Long2ByteMap;
 import net.minecraft.Util;
@@ -8,10 +9,9 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.*;
+import static net.minecraft.client.renderer.RenderPipelines.LINES_SNIPPET;
+import static net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,22 +29,24 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class LightOverlayRenderer implements Consumer<PoseStack> {
+    private static final RenderPipeline LINE_PIPELINE = RenderPipeline.builder(MATRICES_PROJECTION_SNIPPET)
+            .withLocation("pipeline/debug_line_strip")
+            .withVertexShader("core/position_color")
+            .withFragmentShader("core/position_color")
+            .withCull(false)
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.DEBUG_LINES)
+            .build();
     private static final Function<Double, RenderType.CompositeRenderType> LINE = Util.memoize(
-            double_ -> RenderType.create(
-                    "light_overlay_lines",
-                    DefaultVertexFormat.POSITION_COLOR,
-                    VertexFormat.Mode.DEBUG_LINES,
+            double_ -> RenderType.create("light_overlay_lines",
                     256,
+                    LINE_PIPELINE,
                     RenderType.CompositeState.builder()
-                            .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
                             .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(double_)))
-                            .setTransparencyState(RenderStateShard.NO_TRANSPARENCY)
-                            .setCullState(RenderStateShard.NO_CULL)
                             .createCompositeState(false)
             )
     );
     
-    private final Minecraft minecraft = Minecraft.getInstance();
+
     public Frustum frustum;
     public LightOverlayTicker ticker;
     
@@ -54,6 +56,7 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
     
     @Override
     public void accept(PoseStack poses) {
+        Minecraft minecraft = Minecraft.getInstance();
         if (LightOverlay.enabled) {
             LocalPlayer playerEntity = minecraft.player;
             BlockPos playerPos = new BlockPos(playerEntity.getBlockX(), playerEntity.getBlockY(), playerEntity.getBlockZ());
@@ -69,15 +72,15 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
             } else {
                 renderCrosses(poses, camera, playerPos, playerPosX, playerPosY, playerPosZ, chunkRange, collisionContext);
             }
-            Minecraft.getInstance().renderBuffers().bufferSource().endLastBatch();
+            minecraft.renderBuffers().bufferSource().endLastBatch();
         }
     }
     
     private void renderLevels(PoseStack poses, Camera camera, BlockPos playerPos, int playerPosX, int playerPosY, int playerPosZ, int chunkRange, CollisionContext collisionContext) {
-        RenderSystem.depthMask(true);
+        Minecraft minecraft = Minecraft.getInstance();
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos downMutable = new BlockPos.MutableBlockPos();
-        MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource source = minecraft.renderBuffers().bufferSource();
         for (Map.Entry<CubicChunkPos, Long2ByteMap> entry : ticker.CHUNK_MAP.entrySet()) {
             CubicChunkPos chunkPos = entry.getKey();
             if (LightOverlay.caching && (Mth.abs(chunkPos.x - playerPosX) > chunkRange || Mth.abs(chunkPos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(chunkPos.z - playerPosZ) > chunkRange)) {
@@ -93,10 +96,10 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
                 }
             }
         }
-        RenderSystem.enableDepthTest();
     }
     
     public void renderLevel(PoseStack poses, MultiBufferSource.BufferSource source, Camera camera, Level world, BlockPos pos, BlockPos down, byte level, CollisionContext collisionContext) {
+        Minecraft minecraft = Minecraft.getInstance();
         String text = String.valueOf(level);
         Font font = minecraft.font;
         double cameraX = camera.getPosition().x;
@@ -118,7 +121,8 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
     }
     
     private void renderCrosses(PoseStack poses, Camera camera, BlockPos playerPos, int playerPosX, int playerPosY, int playerPosZ, int chunkRange, CollisionContext collisionContext) {
-        MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+        Minecraft minecraft = Minecraft.getInstance();
+        MultiBufferSource.BufferSource source = minecraft.renderBuffers().bufferSource();
         VertexConsumer buffer = source.getBuffer(LINE.apply((double) LightOverlay.lineWidth));
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         
@@ -161,10 +165,10 @@ public class LightOverlayRenderer implements Consumer<PoseStack> {
         float x = pos.getX() - cameraX;
         float y = pos.getY() - cameraY + blockOffset;
         float z = pos.getZ() - cameraZ;
-        builder.addVertex(pose, x + .01f, y, z + .01f).setColor(red, green, blue, 255);
-        builder.addVertex(pose, x + .99f, y, z + .99f).setColor(red, green, blue, 255);
-        builder.addVertex(pose, x + .99f, y, z + .01f).setColor(red, green, blue, 255);
-        builder.addVertex(pose, x + .01f, y, z + .99f).setColor(red, green, blue, 255);
+        builder.addVertex(pose, x + .01f, y, z + .01f).setColor(red, green, blue, 255).setNormal(0.0f, 1.0f, 0.0f);
+        builder.addVertex(pose, x + .99f, y, z + .99f).setColor(red, green, blue, 255).setNormal(0.0f, 1.0f, 0.0f);
+        builder.addVertex(pose, x + .99f, y, z + .01f).setColor(red, green, blue, 255).setNormal(0.0f, 1.0f, 0.0f);
+        builder.addVertex(pose, x + .01f, y, z + .99f).setColor(red, green, blue, 255).setNormal(0.0f, 1.0f, 0.0f);
     }
     
     public boolean isFrustumVisible(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {

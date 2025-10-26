@@ -5,6 +5,11 @@ import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import me.shedaniel.lightoverlay.common.LightOverlay;
 import me.shedaniel.lightoverlay.common.LightOverlayRenderer;
+import net.minecraft.client.*;
+import net.neoforged.api.distmarker.*;
+import net.neoforged.bus.api.*;
+import net.neoforged.fml.common.*;
+import net.neoforged.neoforge.client.event.*;
 
 import java.util.function.Consumer;
 

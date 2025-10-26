@@ -36,7 +36,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
 public class LightOverlayTicker {
-    private final Minecraft minecraft = Minecraft.getInstance();
     private long ticks = 0;
     private static int threadNumber = 0;
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), r -> {
@@ -119,7 +118,7 @@ public class LightOverlayTicker {
                 } else {
                     assert Minecraft.getInstance().level != null;
                     var height = Mth.ceil(Minecraft.getInstance().level.getHeight() / 32.0);
-                    var start = Math.floorDiv(Minecraft.getInstance().level.getMinBuildHeight(), 32);
+                    var start = Math.floorDiv(Minecraft.getInstance().level.getMinY(), 32);
                     int playerPosX = ((int) player.getX()) >> 4;
                     int playerPosY = ((int) player.getY()) >> 5;
                     int playerPosZ = ((int) player.getZ()) >> 4;
@@ -206,6 +205,7 @@ public class LightOverlayTicker {
     }
     
     private void processChunk(CubicChunkPos pos, int playerPosX, int playerPosY, int playerPosZ, CollisionContext context) {
+        Minecraft minecraft = Minecraft.getInstance();
         CALCULATING_POS.remove(pos);
         int chunkRange = LightOverlay.getChunkRange();
         if (Mth.abs(pos.x - playerPosX) > chunkRange || Mth.abs(pos.y - playerPosY) > Math.max(1, chunkRange >> 1) || Mth.abs(pos.z - playerPosZ) > chunkRange || POS.contains(pos)) {
