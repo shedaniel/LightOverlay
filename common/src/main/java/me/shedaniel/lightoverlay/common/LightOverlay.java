@@ -39,13 +39,16 @@ public class LightOverlay {
     
     public static LightOverlayTicker ticker = new LightOverlayTicker();
     public static LightOverlayRenderer renderer = new LightOverlayRenderer(ticker);
-    
+
+    public static final KeyMapping.Category LIGHT_OVERLAY = KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath("lightoverlay", "category"));
+
     public static void register() {
         // Load Config
         configFile = new File(Platform.getConfigFolder().toFile(), "lightoverlay.properties");
         loadConfig(configFile);
-        
-        enableOverlay = createKeyBinding(ResourceLocation.fromNamespaceAndPath("lightoverlay", "enable_overlay"), InputConstants.Type.KEYSYM, 296, "key.lightoverlay.category");
+
+
+        enableOverlay = createKeyBinding(ResourceLocation.fromNamespaceAndPath("lightoverlay", "enable_overlay"), InputConstants.Type.KEYSYM, 296, LIGHT_OVERLAY);
         KeyMappingRegistry.register(enableOverlay);
         
         registerDebugRenderer(renderer);
@@ -197,7 +200,7 @@ public class LightOverlay {
         fos.close();
     }
     
-    private static KeyMapping createKeyBinding(ResourceLocation id, InputConstants.Type type, int code, String category) {
+    private static KeyMapping createKeyBinding(ResourceLocation id, InputConstants.Type type, int code, KeyMapping.Category category) {
         return new KeyMapping("key." + id.getNamespace() + "." + id.getPath(), type, code, category);
     }
     
